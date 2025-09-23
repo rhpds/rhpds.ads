@@ -23,3 +23,11 @@ ocp4_workload_rhdh_orchestrator_workflows:
   chart:
   - name: greeting
     location: orchestrator-workflows/greeting
+
+ocp4_workload_rhdh_orchestrator_operator_namespace: openshift-operators
+ocp4_workload_rhdh_orchestrator_channel: stable
+ocp4_workload_rhdh_orchestrator_starting_csv: ""
+ocp4_workload_rhdh_orchestrator_automatic_install_plan_approval: true
+ocp4_workload_rhdh_orchestrator_use_catalog_snapshot: true
+ocp4_workload_rhdh_orchestrator_catalog_snapshot_image: quay.io/gpte-devops-automation/olm_snapshot_redhat_catalog
+ocp4_workload_rhdh_orchestrator_catalog_snapshot_image_tag: v4.18_2025_09_22
