@@ -20,11 +20,6 @@
   until: r_noobaa.resources.0.status.phase == "Ready"
   retries: 120
   delay: 10
-
-- name: Install quay
-  ansible.builtin.include_role:
-    name: ocp4_workload_quay_operator
-
 # Ignore errors for potentially earlier releases of Quay than 3.10
 - name: Wait until Quay database has been redeployed
   kubernetes.core.k8s_info:
