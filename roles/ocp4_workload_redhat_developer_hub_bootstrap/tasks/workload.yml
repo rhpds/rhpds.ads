@@ -1,0 +1,57 @@
+---
+- name: Setting up workload
+  ansible.builtin.debug:
+    msg: "Setting up GitLab"
+
+- name: Check if helm is installed
+  ansible.builtin.command: command -v helm
+  register: git_helm
+  ignore_errors: true
+
+- name: Install helm if not present
+  when: git_helm.rc != 0
+  become: true
+  ansible.builtin.shell: |
+    curl -LO https://get.helm.sh/helm-{{ ocp4_workload_redhat_developer_hub_bootstrap_helm_cli_version }}-linux-amd64.tar.gz
+    tar -zxvf helm-{{ ocp4_workload_redhat_developer_hub_bootstrap_helm_cli_version }}-linux-amd64.tar.gz
+    mv linux-amd64/helm /usr/local/bin/helm
+  args:
+    chdir: /tmp
+
+- name: Clone janus demo repository
+  ansible.builtin.git:
+    accept_hostkey: true
+    force: true
+    repo: "{{ ocp4_workload_redhat_developer_hub_bootstrap_janus_bootstrap_repo }}"
+    dest: "~/demo-setup"
+    version: "{{ ocp4_workload_redhat_developer_hub_bootstrap_janus_bootstrap_repo_revision }}"
+  environment:
+    GIT_SSL_NO_VERIFY: "true"
+
+- name: Setup Gitops
+  ansible.builtin.include_tasks:
+    file: ./setup_janus_argocd.yml
+
+- name: Setup Vault
+  ansible.builtin.include_tasks:
+    file: ./setup_vault.yml
+
+- name: Setup External Secrets Operator
+  ansible.builtin.include_tasks:
+    file: ./setup_external_secrets.yml
+
+- name: Setup Quay
+  ansible.builtin.include_tasks:
+    file: ./setup_quay.yml
+
+- name: Setup Orchestrator
+  when: ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_enabled
+  ansible.builtin.include_tasks:
+    file: ./setup_orchestrator.yml
+
+# Leave this as the last task in the playbook.
+# --------------------------------------------
+- name: Workload tasks complete
+  ansible.builtin.debug:
+    msg: "Workload Tasks completed successfully."
+  when: not silent|bool
