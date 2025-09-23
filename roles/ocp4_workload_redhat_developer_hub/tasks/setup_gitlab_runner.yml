@@ -42,35 +42,4 @@
     definition: "{{ lookup('template', item) | from_yaml }}"
   loop:
   - secret-gitlab-runner-secret.yml.j2
-  - gitlab-runner-techdocs.yml.j2
-
-- name: Create CI/CD Variables
-  ansible.builtin.uri:
-    url: https://{{ ocp4_workload_redhat_developer_hub_gitlab_host }}/api/v4/admin/ci/variables
-    method: POST
-    body_format: json
-    body:
-      "key": "{{ item.name }}"
-      "variable_type": "env_var"
-      "value": "{{ item.value }}"
-      "protected": false
-      "masked": false
-      "raw": false
-      "environment_scope": "*"
-    headers:
-      PRIVATE-TOKEN: "{{ ocp4_workload_redhat_developer_hub_gitlab_root_token }}"
-    validate_certs: false
-    status_code: [201]
-  loop:
-  - name: TECHDOCS_S3_BUCKET_NAME
-    value: "{{ ocp4_workload_redhat_developer_hub_minio_bucket_name }}"
-  - name: AWS_ACCESS_KEY_ID
-    value: "{{ ocp4_workload_redhat_developer_hub_minio_username }}"
-  - name: AWS_SECRET_ACCESS_KEY
-    value: "{{ ocp4_workload_redhat_developer_hub_minio_password }}"
-  - name: AWS_REGION
-    value: us-east-2
-  - name: AWS_ENDPOINT
-    value: "https://minio-{{
-      ocp4_workload_redhat_developer_hub_minio_namespace }}.{{
-      ocp4_workload_redhat_developer_hub_apps_domain }}"
+  - gitlab-runner-instance.yml.j2

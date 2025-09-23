@@ -87,12 +87,6 @@
   ansible.builtin.set_fact:
     ocp4_workload_redhat_developer_hub_quay_admin_token: "{{ r_quay_token.resources[0].data.token | b64decode }}"
 
-- name: Extract S3 Details
-  ansible.builtin.set_fact:
-    ocp4_workload_redhat_developer_hub_minio_endpoint: "https://minio-{{
-      ocp4_workload_redhat_developer_hub_minio_namespace }}.{{
-      ocp4_workload_redhat_developer_hub_apps_domain }}"
-
 - name: Setup Backstage Repo
   ansible.builtin.include_tasks:
     file: ./setup_backstage_repo.yml

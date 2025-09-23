@@ -1,7 +1,7 @@
 apiVersion: apps.gitlab.com/v1beta2
 kind: Runner
 metadata:
-  name: techdocs-runner
+  name: gitlab-runner
   namespace: {{ ocp4_workload_redhat_developer_hub_gitlab_namespace }}
 spec:
   gitlabUrl: 'https://{{ ocp4_workload_redhat_developer_hub_gitlab_host }}'
