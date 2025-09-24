@@ -31,6 +31,11 @@
     ocp4_workload_redhat_developer_hub_quay_host: quay-{{ guid }}.{{
      r_ingress_config.resources[0].spec.domain }}
 
+- name: Set git user settings
+  ansible.builtin.shell: |
+    git config --global user.name "{{ ocp4_workload_redhat_developer_hub_gitlab_root_user }}"
+    git config --global user.email "{{ ocp4_workload_redhat_developer_hub_gitlab_root_user_email }}"
+
 - name: Setup Gitlab dependencies
   ansible.builtin.include_tasks:
     file: ./setup_gitlab.yml
