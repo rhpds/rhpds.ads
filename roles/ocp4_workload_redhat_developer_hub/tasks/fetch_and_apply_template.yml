@@ -12,4 +12,3 @@
     src: /tmp/{{ template_file }}
     dest: "{{ folder }}/{{ template_file }}"
     mode: "0660"
-    owner: "{{ ansible_user }}"
