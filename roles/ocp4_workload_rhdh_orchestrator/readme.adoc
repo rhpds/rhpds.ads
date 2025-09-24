@@ -1,5 +1,0 @@
-= Red Hat OpenShift Dev Spaces
-
-== Role overview
-
-This role installs Red Hat OpenShift Dev Spaces into an OpenShift Cluster.
