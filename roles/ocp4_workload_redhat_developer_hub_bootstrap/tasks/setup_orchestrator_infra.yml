@@ -15,6 +15,10 @@
   delay: 10
   until: crd_result is not failed
 
+- name: Install Orchestrator workflow repository
+  ansible.builtin.shell: |
+    helm repo add orchestrator-workflows {{ ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_workflows.repo }}
+
 - name: Install Orchestrator workflows
   ansible.builtin.shell: |
     helm install {{ item.name }} {{ item.location }} {{
