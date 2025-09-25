@@ -13,7 +13,7 @@
   register: crd_result
   retries: 100
   delay: 10
-  until: crd_result.rc is not failed
+  until: crd_result is not failed
 
 - name: Install Orchestrator workflows
   ansible.builtin.shell: |
