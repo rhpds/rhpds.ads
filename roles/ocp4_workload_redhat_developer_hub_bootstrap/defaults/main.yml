@@ -33,3 +33,16 @@ ocp4_workload_redhat_developer_hub_bootstrap_quay_admin_password: "{{
   common_password | default(lookup('password', '/dev/null chars=ascii_letters,digits '~ 'length=' ~ 10)) }}"
 
 ocp4_workload_redhat_developer_hub_bootstrap_backstage_namespace: backstage
+
+ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_workflows:
+  repo: https://redhat-ads-tech.github.io/orchestrator-workflows
+  chart:
+  - name: greeting
+    location: orchestrator-workflows/greeting
+    customParameters: >
+      --set-string=persistence.postgresql.secretRef.name=backstage-postgresql-svcbind-postgres
+      --set-string=persistence.postgresql.secretRef.userKey=username
+      --set-string=persistence.postgresql.secretRef.passwordKey=password
+      --set-string=persistence.postgresql.serviceRef.name=backstage-postgresql
+      --set-string=persistence.postgresql.serviceRef.databaseName=sonataflow
+      --set-string=persistence.postgresql.serviceRef.databaseSchema=greeting
