@@ -55,6 +55,10 @@
   ansible.builtin.include_tasks:
     file: ./setup_backstage.yml
 
+- name: Setup Orchestrator workflows
+  ansible.builtin.include_tasks:
+    file: ./setup_orchestrator_workflows.yml
+
 - name: Setup Gitlab dependencies
   ansible.builtin.include_tasks:
     file: ./setup_gitlab_runner.yml

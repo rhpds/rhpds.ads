@@ -1,0 +1,33 @@
+---
+- name: Wait for backstage namespace to be present
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp4_workload_redhat_developer_hub_backstage_namespace }}"
+  register: r_ns_created
+  retries: 60
+  delay: 10
+  until: r_ns_created.resources | length > 0
+
+- name: Wait for SonataFlow CRD to be created
+  shell: |
+    oc get crd sonataflows.sonataflow.org
+  register: crd_result
+  retries: 100
+  delay: 10
+  until: crd_result is not failed
+
+- name: Install Orchestrator workflow repository
+  ansible.builtin.shell: |
+    helm repo add orchestrator-workflows {{ ocp4_workload_redhat_developer_hub_orchestrator_workflows.repo }}
+
+- name: Install Orchestrator workflows
+  ansible.builtin.shell: |
+    helm install {{ item.name }} {{ item.location }} {{
+    item.customParameters }} -n {{
+    ocp4_workload_redhat_developer_hub_backstage_namespace }}
+  loop: "{{ ocp4_workload_redhat_developer_hub_orchestrator_workflows.chart }}"
+  register: r_orch_workflow
+  until: r_orch_workflow is not failed
+  retries: 120
+  delay: 10
