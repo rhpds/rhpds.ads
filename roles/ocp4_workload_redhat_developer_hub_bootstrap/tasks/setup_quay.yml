@@ -6,7 +6,9 @@
     name: "{{ 'ocs-storagecluster' if ocp4_workload_redhat_developer_hub_bootstrap_cloud_provider != 'openshift_cnv' else 'ocs-external-storagecluster' }}" # yamllint disable-line rule:line-length
     namespace: openshift-storage
   register: r_storagecluster
-  until: r_storagecluster.resources.0.status.phase == "Ready"
+  until:
+  - r_storagecluster.resources | length > 0
+  - r_storagecluster.resources.0.status.phase == "Ready"
   retries: 120
   delay: 10
 
