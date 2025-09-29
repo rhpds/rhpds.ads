@@ -33,7 +33,7 @@ ocp4_workload_redhat_developer_hub_bootstrap_quay_admin_password: "{{
   common_password | default(lookup('password', '/dev/null chars=ascii_letters,digits '~ 'length=' ~ 10)) }}"
 
 ocp4_workload_redhat_developer_hub_bootstrap_openshift_cluster_admin_token: "{{ openshift_cluster_admin_token }}"
-ocp4_workload_redhat_developer_hub_bootstrap_openshift_api_url: "{{ openshift_api_url }}"
+ocp4_workload_redhat_developer_hub_bootstrap_openshift_api_url: "https://{{ openshift_api_url }}:6443"
 
 ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_infra_repo: https://redhat-developer.github.io/rhdh-chart
 ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_infra_version: 0.2.3
