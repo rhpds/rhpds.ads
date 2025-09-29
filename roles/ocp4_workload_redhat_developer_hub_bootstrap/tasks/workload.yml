@@ -3,6 +3,11 @@
   ansible.builtin.debug:
     msg: "Setting up GitLab"
 
+- name: Create kubeconfig
+  ansible.builtin.shell: |
+    oc login --token {{ ocp4_workload_redhat_developer_hub_bootstrap_openshift_cluster_admin_token }} {{
+    ocp4_workload_redhat_developer_hub_bootstrap_openshift_api_url }} --insecure-skip-tls-verify
+
 - name: Check if helm is installed
   ansible.builtin.command: command -v helm
   register: git_helm
@@ -27,6 +32,10 @@
     version: "{{ ocp4_workload_redhat_developer_hub_bootstrap_janus_bootstrap_repo_revision }}"
   environment:
     GIT_SSL_NO_VERIFY: "true"
+
+- name: Setup Gitops
+  ansible.builtin.include_tasks:
+    file: ./setup_orchestrator_infra.yml
 
 - name: Setup Gitops
   ansible.builtin.include_tasks:
