@@ -30,10 +30,6 @@
 
 - name: Setup Gitops
   ansible.builtin.include_tasks:
-    file: ./setup_orchestrator_infra.yml
-
-- name: Setup Gitops
-  ansible.builtin.include_tasks:
     file: ./setup_janus_argocd.yml
 
 - name: Setup Vault

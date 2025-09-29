@@ -1,8 +1,0 @@
----
-- name: Install Orchestrator Infrastructure
-  ansible.builtin.shell: |
-    helm repo add redhat-developer {{ ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_infra_repo }}
-    helm install my-orchestrator-infra redhat-developer/redhat-developer-hub-orchestrator-infra --version {{
-    ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_infra_version }} \
-    --set-string=serverlessLogicOperator.subscription.spec.installPlanApproval=Automatic \
-    --set-string=serverlessOperator.subscription.spec.installPlanApproval=Automatic
