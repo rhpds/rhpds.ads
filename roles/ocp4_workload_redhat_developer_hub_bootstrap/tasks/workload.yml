@@ -3,18 +3,10 @@
   ansible.builtin.debug:
     msg: "Setting up Developer Hub Bootstrap"
 
-- name: Authenticate to the cluster
-  community.kubernetes.k8s_auth:
-    host: "{{ ocp4_workload_redhat_developer_hub_bootstrap_openshift_api_url }}"
-    api_key: "{{ ocp4_workload_redhat_developer_hub_bootstrap_openshift_cluster_admin_token }}"
-    verify_ssl: no
-  register: k8s_auth_result
-
-- name: Write kubeconfig to default path
-  copy:
-    content: "{{ k8s_auth_result.kubeconfig | to_nice_yaml }}"
-    dest: "~/.kube/config"
-    mode: '0600'
+- name: Create kubeconfig
+  ansible.builtin.shell: |
+    oc login --token {{ ocp4_workload_redhat_developer_hub_bootstrap_openshift_cluster_admin_token }} {{
+    ocp4_workload_redhat_developer_hub_bootstrap_openshift_api_url }} --insecure-skip-tls-verify
 
 - name: Check if helm is installed
   ansible.builtin.command: command -v helm
