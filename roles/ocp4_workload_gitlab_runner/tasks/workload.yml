@@ -83,4 +83,4 @@
     definition: "{{ lookup('template', item) | from_yaml }}"
   loop:
   - secret-gitlab-runner-secret.yml.j2
-  - gitlab-runner-techdocs.yml.j2
+  - gitlab-runner-instance.yml.j2
