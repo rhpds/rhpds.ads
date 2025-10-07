@@ -1,0 +1,8 @@
+apiVersion: apps.gitlab.com/v1beta2
+kind: Runner
+metadata:
+  name: gitlab-runner
+  namespace: {{ ocp4_workload_gitlab_runner_gitlab_namespace }}
+spec:
+  gitlabUrl: 'https://{{ _gitlab_host }}'
+  token: gitlab-dev-runner-secret

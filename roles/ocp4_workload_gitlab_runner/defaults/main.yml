@@ -1,0 +1,13 @@
+---
+become_override: false
+silent: false
+
+ocp4_workload_gitlab_runner_gitlab_namespace: gitlab
+ocp4_workload_gitlab_runner_operator_namespace: openshift-operators
+ocp4_workload_gitlab_runner_channel: stable
+ocp4_workload_gitlab_runner_automatic_install_plan_approval: true
+ocp4_workload_gitlab_runner_starting_csv: gitlab-runner-operator.v1.18.2
+ocp4_workload_gitlab_runner_catalog_setup: true
+ocp4_workload_gitlab_runner_catalog_image: >-
+  registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator/gitlab-runner-operator-catalog-source
+ocp4_workload_gitlab_runner_catalog_image_tag: v1.18.2

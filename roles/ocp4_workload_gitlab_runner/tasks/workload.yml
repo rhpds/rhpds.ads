@@ -1,0 +1,86 @@
+---
+- name: Install GitLab Runner Operator
+  block:
+  - name: Install GitLab Runner Operator
+    ansible.builtin.include_role:
+      name: install_operator
+    vars:
+      install_operator_action: install
+      install_operator_name: gitlab-runner-operator
+      install_operator_namespace: "{{
+        ocp4_workload_gitlab_runner_operator_namespace }}"
+      install_operator_channel: "{{
+        ocp4_workload_gitlab_runner_channel }}"
+      install_operator_automatic_install_plan_approval: "{{
+        ocp4_workload_gitlab_runner_automatic_install_plan_approval | default(true) }}"
+      install_operator_starting_csv: "{{ ocp4_workload_gitlab_runner_starting_csv }}"
+      install_operator_catalogsource_setup: "{{
+        ocp4_workload_gitlab_runner_catalog_setup }}"
+      install_operator_catalogsource_image: "{{
+        ocp4_workload_gitlab_runner_catalog_image }}"
+      install_operator_catalogsource_image_tag: "{{
+        ocp4_workload_gitlab_runner_catalog_image_tag }}"
+
+- name: Retrieve Gitlab route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: gitlab
+    namespace: "{{ ocp4_workload_gitlab_runner_gitlab_namespace }}"
+  register: r_gitlab_route
+  retries: 120
+  delay: 10
+  until:
+  - r_gitlab_route is defined
+  - r_gitlab_route.resources is defined
+  - r_gitlab_route.resources | length > 0
+
+- name: Set Gitlab host
+  ansible.builtin.set_fact:
+    _gitlab_host: "{{ r_gitlab_route.resources[0].spec.host }}"
+
+- name: Retrieve Gitlab root private token
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: root-user-personal-token
+    namespace: "{{ ocp4_workload_advanced_developer_suite_gitlab_namespace }}"
+  register: r_root_token
+  retries: 120
+  delay: 10
+  until:
+  - r_root_token is defined
+  - r_root_token.resources is defined
+  - r_root_token.resources | length > 0
+  - r_root_token.resources[0] is defined
+  - r_root_token.resources[0].data is defined
+  - r_root_token.resources[0].data.token is defined
+  - r_root_token.resources[0].data.token | length > 0
+
+- name: Decode root token
+  ansible.builtin.set_fact:
+    _gitlab_root_token: "{{ r_root_token.resources[0].data.token | b64decode }}"
+
+- name: Create GitLab runner Registration Token
+  ansible.builtin.uri:
+    url: https://{{ _gitlab_host }}/api/v4/runners/reset_registration_token
+    method: POST
+    return_content: true
+    body_format: json
+    headers:
+      PRIVATE-TOKEN: " {{ _gitlab_root_token }} "
+    validate_certs: false
+    status_code: [201]
+  register: r_gitlab_runner_token
+
+- name: Create registration token secret
+  ansible.builtin.set_fact:
+    _gitlab_runner_token: "{{ r_gitlab_runner_token.json.token }}"
+
+- name: Create GitLab Runner instance
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', item) | from_yaml }}"
+  loop:
+  - secret-gitlab-runner-secret.yml.j2
+  - gitlab-runner-techdocs.yml.j2

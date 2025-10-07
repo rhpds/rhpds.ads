@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  role_name: ocp4_workload_gitlab_runner
+  author: Tyrell Reddy
+  description: |
+    GitLab Runner
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms: []
+  galaxy_tags:
+  - ocp
+  - openshift
+  - operators
+  - rhsso
+dependencies: []
