@@ -2,7 +2,7 @@
 become_override: false
 silent: false
 
-ocp4_workload_gitlab_runner_gitlab_namespace: gitlab
+ocp4_workload_gitlab_runner_namespace: gitlab
 ocp4_workload_gitlab_runner_operator_namespace: openshift-operators
 ocp4_workload_gitlab_runner_channel: stable
 ocp4_workload_gitlab_runner_automatic_install_plan_approval: true
