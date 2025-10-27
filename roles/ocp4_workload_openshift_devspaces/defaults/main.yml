@@ -8,5 +8,6 @@ ocp4_workload_openshift_devspaces_catalogsource_name: devspaces-catalogsource
 ocp4_workload_openshift_devspaces_catalogsource_image: ""
 ocp4_workload_openshift_devspaces_catalogsource_tag: ""
 ocp4_workload_openshift_devspaces_channel: stable
+ocp4_workload_openshift_devspaces_automatic_install_plan_approval: false
 ocp4_workload_openshift_devspaces_startingcsv: ""
 ocp4_workload_openshift_devspaces_namespace: openshift-devspaces
