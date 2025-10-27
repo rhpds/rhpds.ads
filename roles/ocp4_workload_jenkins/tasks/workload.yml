@@ -55,7 +55,7 @@
     register: r_ingress_config
 
   - name: Save jenkins credentials
-    agnosticd_user_info:
+    agnosticd.core.agnosticd_user_info:
       data:
         jenkins_console: "https://jenkins-{{
           ocp4_workload_jenkins_project }}.{{ r_ingress_config.resources[0].spec.domain }}"
@@ -63,7 +63,7 @@
         jenkins_password: "{{ ocp4_workload_jenkins_admin_password }}"
 
   - name: Print Admin credentials
-    agnosticd_user_info:
+    agnosticd.core.agnosticd_user_info:
       msg: "{{ item }}"
     loop:
     - ""
