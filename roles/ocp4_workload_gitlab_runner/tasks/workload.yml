@@ -82,5 +82,6 @@
     state: present
     definition: "{{ lookup('template', item) | from_yaml }}"
   loop:
+  - configmap-gitlab-runner-config.yml.j2
   - secret-gitlab-runner-secret.yml.j2
   - gitlab-runner-instance.yml.j2

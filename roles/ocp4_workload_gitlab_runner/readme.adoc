@@ -1,5 +1,5 @@
-= Red Hat Single Sign-On (RHSSO)
+= GitLab Runner
 
 == Role overview
 
-This role installs Red Hat Single Sign-On (RHSSO) into an OpenShift Cluster.
+This role installs a GitLab Runner into an OpenShift Cluster.

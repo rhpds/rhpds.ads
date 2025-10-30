@@ -4,5 +4,6 @@ metadata:
   name: gitlab-runner
   namespace: {{ ocp4_workload_gitlab_runner_namespace }}
 spec:
+  config: gitlab-runner-config
   gitlabUrl: 'https://{{ _gitlab_host }}'
   token: gitlab-dev-runner-secret
