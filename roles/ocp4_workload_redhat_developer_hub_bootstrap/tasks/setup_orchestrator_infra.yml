@@ -1,8 +1,15 @@
 ---
-- name: Install Orchestrator Infrastructure
+- name: Install Orchestrator Repository
   ansible.builtin.shell: |
     helm repo add redhat-developer {{ ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_infra_repo }}
+
+- name: Install Orchestrator Infrastructure
+  ansible.builtin.shell: |
     helm install my-orchestrator-infra redhat-developer/redhat-developer-hub-orchestrator-infra --version {{
     ocp4_workload_redhat_developer_hub_bootstrap_orchestrator_infra_version }} \
     --set-string=serverlessLogicOperator.subscription.spec.installPlanApproval=Automatic \
     --set-string=serverlessOperator.subscription.spec.installPlanApproval=Automatic
+  register: r_orch_infra
+  until: r_orch_infra is not failed
+  retries: 120
+  delay: 10
