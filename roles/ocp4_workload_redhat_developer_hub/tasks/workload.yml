@@ -10,15 +10,20 @@
     name: cluster
   register: r_ingress_config
 
+- name: Get Keycloak route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: "{{ ocp4_workload_redhat_developer_hub_keycloak_namespace }}"
+  register: r_keycloak_routes
+
 - name: Get OpenShift Apps Domain
   ansible.builtin.set_fact:
     ocp4_workload_redhat_developer_hub_apps_domain: "{{ r_ingress_config.resources[0].spec.domain }}"
     ocp4_workload_redhat_developer_hub_gitlab_host: "gitlab-{{
       ocp4_workload_redhat_developer_hub_gitlab_namespace }}.{{
       r_ingress_config.resources[0].spec.domain }}"
-    ocp4_workload_redhat_developer_hub_keycloak_host: "keycloak-{{
-      ocp4_workload_redhat_developer_hub_keycloak_namespace }}.{{
-      r_ingress_config.resources[0].spec.domain }}"
+    ocp4_workload_redhat_developer_hub_keycloak_host: "{{ r_keycloak_routes.resources[0].spec.host }}"
     ocp4_workload_redhat_developer_hub_backstage_host: "backstage-{{
       ocp4_workload_redhat_developer_hub_backstage_namespace }}.{{
       r_ingress_config.resources[0].spec.domain }}"
