@@ -56,6 +56,9 @@
   - r_quay_database_pod.resources[0].status is defined
   - r_quay_database_pod.resources[0].status.phase is defined
   - r_quay_database_pod.resources[0].status.phase == "Running"
+  - r_quay_database_pod.resources[0].status.containerStatuses is defined
+  - r_quay_database_pod.resources[0].status.containerStatuses | length > 0
+  - r_quay_database_pod.resources[0].status.containerStatuses[0].ready | bool
 
 - name: Debug database pod name
   ansible.builtin.debug:
@@ -69,8 +72,8 @@
     command: >-
       psql -d quay-quay-database -c "update public.oauthaccesstoken set expires_at = '2300-12-31 00:00:00' where id = 1;"
   register: r_extend_token
-  retries: 2
-  delay: 5
+  retries: 10
+  delay: 10
   ignore_errors: true
   until:
   - r_extend_token.rc is defined
@@ -85,8 +88,8 @@
     "update public.oauthaccesstoken set expires_at = '2300-12-31 00:00:00' where id = 1;"
   register: _r_ext_quay_token_exp
   until: _r_ext_quay_token_exp.rc == 0
-  retries: 5
-  delay: 30
+  retries: 10
+  delay: 15
 
 - name: Create vault secrets for Quay access
   vars:
