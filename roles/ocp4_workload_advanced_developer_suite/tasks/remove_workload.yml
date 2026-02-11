@@ -5,6 +5,5 @@
 
 # Leave this as the last task in the playbook.
 - name: remove_workload tasks complete
-  when: not silent | bool
   ansible.builtin.debug:
     msg: "Remove Workload tasks completed successfully."
