@@ -1,0 +1,58 @@
+---
+- name: Update developer hub config - set session
+  set_fact:
+    _dh_app_config: >-
+      {{ _dh_app_config | combine(
+        {
+          'auth': {
+            'session': {
+              'secret': {
+                '$env': 'BACKEND_SECRET'
+              }
+            }
+          }
+        }, recursive=True)
+      }}
+
+- name: Update developer hub config - remove config
+  set_fact:
+    _dh_app_config: >-
+      {{ _dh_app_config | combine(
+        {
+          'auth': _dh_app_config.auth | dict2items
+                    | rejectattr('key', 'equalto', 'providers')
+                    | list
+                    | items2dict
+        }) | dict2items
+          | rejectattr('key', 'equalto', 'dangerouslyAllowSignInWithoutUserInCatalog')
+          | list
+          | items2dict
+      }}
+
+- name: Update developer hub config - set oidc provider
+  set_fact:
+    _dh_app_config: >-
+      {{ _dh_app_config | combine(
+        {
+          'auth': {
+            'environment': 'production',
+            'providers': {
+              'oidc': {
+                'production': {
+                  'metadataUrl': '${AUTH__OIDC__METADATA__URL}',
+                  'clientId': '${AUTH__OIDC__CLIENT__ID}',
+                  'clientSecret': '${AUTH__OIDC__CLIENT__SECRET}',
+                  'prompt': 'auto',
+                  'signIn': {
+                    'resolvers': [
+                      {
+                        'resolver': 'preferredUsernameMatchingUserEntityName'
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }, recursive=True)
+      }}
