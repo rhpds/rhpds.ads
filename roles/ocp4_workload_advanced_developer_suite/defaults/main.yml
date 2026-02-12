@@ -108,6 +108,7 @@ ocp4_workload_advanced_developer_suite_acs_enable_route_certs: true
 ocp4_workload_advanced_developer_suite_disable_odf: false
 
 ocp4_workload_advanced_developer_suite_helm_cli_version: v3.18.4
+ocp4_workload_advanced_developer_suite_go_version: go1.26.0
 
 # yamllint disable rule:line-length
 ocp4_workload_advanced_developer_suite_orchestrator_workflows:

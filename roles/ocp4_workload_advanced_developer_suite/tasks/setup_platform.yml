@@ -60,6 +60,16 @@
       \1        value: '30000000'
       \1\2
 
+- name: Install required cli's
+  ansible.builtin.shell: |
+    dnf install make -y
+    VERSION={{ ocp4_workload_advanced_developer_suite_go_version }}
+    wget https://go.dev/dl/${VERSION}.linux-amd64.tar.gz
+    rm -rf /usr/local/go /usr/bin/go
+    tar -C /usr/local -xzf ${VERSION}.linux-amd64.tar.gz
+    ln -sf /usr/local/go/bin/go /usr/bin/go
+    rm -rf ${VERSION}.linux-amd64.tar.gz
+
 - name: Build tssc cli and create config
   become: true
   ansible.builtin.shell: |
