@@ -72,7 +72,6 @@
     _jenkins_token: "{{ r_jenkins_token.json.data.tokenValue }}"
 
 - name: Integrate jenkins
-  become: true
   ansible.builtin.shell: |
     ./bin/tssc integration jenkins \
     --token="{{ _jenkins_token }}" \
@@ -218,7 +217,6 @@
       }}
 
 - name: Integrate quay
-  become: true
   ansible.builtin.shell: |
     ./bin/tssc integration quay \
     --dockerconfigjson='{{ _dockerconfigjson_write }}' \

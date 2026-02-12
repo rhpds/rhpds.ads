@@ -8,7 +8,7 @@
 
 - name: Set platform dependency variables
   set_fact:
-    _ocp_apps_domain: "{{ r_ingress_config.resources[0].spec.domain }}"
+    _ocp_apps_domain: "{{ r_ingress_config.resources[0].sp  ec.domain }}"
     _gitlab_url: https://gitlab-{{ ocp4_workload_advanced_developer_suite_gitlab_namespace }}.{{
       r_ingress_config.resources[0].spec.domain }}
     _gitlab_host: gitlab-{{ ocp4_workload_advanced_developer_suite_gitlab_namespace }}.{{
