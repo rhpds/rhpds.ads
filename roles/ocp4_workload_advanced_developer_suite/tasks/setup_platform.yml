@@ -67,7 +67,7 @@
 
 - name: Build tssc cli and create config
   ansible.builtin.shell: |
-    ls /home/runner
+    ls -al /home/runner
     mkdir -p /root/.kube
     cp /home/runner/.kube/config /root/.kube/config
     make build
