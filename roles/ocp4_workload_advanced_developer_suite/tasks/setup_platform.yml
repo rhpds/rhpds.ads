@@ -67,6 +67,7 @@
 
 - name: Build tssc cli and create config
   ansible.builtin.shell: |
+    oc login --token={{ openshift_cluster_admin_token }} --server={{ openshift_api_url }} --insecure-skip-tls-verify=true
     make build
     ./bin/tssc config --create
     ./bin/tssc config --get > config.yaml && ./bin/tssc config --delete
