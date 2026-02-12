@@ -1,7 +1,7 @@
 ---
 - name: Check operator channels
   ansible.builtin.include_tasks:
-    file: ./check_operator_channels.yml
+    file: ./check_subscriptions.yml
     apply:
       become: true
   loop:
