@@ -5,32 +5,32 @@
   register: _values_file
 
 - name: Parse values.yaml
-  set_fact:
+  ansible.builtin.set_fact:
     _values_content: >-
       {{ _values_file.content | b64decode | from_yaml }}
 
 - name: Get current channel from values.yaml
-  set_fact:
+  ansible.builtin.set_fact:
     _current_channel: >-
       {{ _values_content.subscriptions[item.subscription].channel }}
 
 - name: Get available channels from redhat-operators
-  shell: |
+  ansible.builtin.shell: |
     oc get packagemanifest {{ item.operator }} -n openshift-marketplace -o jsonpath='{.status.channels[*].name}'
   register: _channels_output
 
 - name: Get default channel
-  shell: |
+  ansible.builtin.shell: |
     oc get packagemanifest {{ item.operator }} -n openshift-marketplace -o jsonpath='{.status.defaultChannel}'
   register: _default_channel_output
 
 - name: Check if current channel exists in packagemanifest
-  set_fact:
+  ansible.builtin.set_fact:
     _channel_exists: >-
       {{ _current_channel in _channels_output.stdout.split() }}
 
 - name: Update channel in values content
-  set_fact:
+  ansible.builtin.set_fact:
     _updated_values: >-
       {{
         _values_content
