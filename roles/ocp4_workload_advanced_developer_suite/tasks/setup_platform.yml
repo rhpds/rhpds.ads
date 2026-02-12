@@ -64,14 +64,7 @@
     tar -C /usr/local -xzf ${VERSION}.linux-amd64.tar.gz
     ln -sf /usr/local/go/bin/go /usr/bin/go
     rm -rf ${VERSION}.linux-amd64.tar.gz
-    echo '1'
-    ls -al /home/runner
-    echo '2'
-    ls -al /root
-    echo '3'
     oc login --token={{ openshift_cluster_admin_token }} {{ openshift_api_url }} --insecure-skip-tls-verify
-    ls -al /home
-    ls -al /root
     mkdir -p /root/.kube
     cp /home/runner/.kube/config /root/.kube/config
 
