@@ -6,7 +6,6 @@
 
 - name: Install helm if not present
   when: git_helm.rc != 0
-  become: true
   ansible.builtin.shell: |
     curl -LO https://get.helm.sh/helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
     tar -zxvf helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
@@ -15,7 +14,6 @@
     chdir: /tmp
 
 - name: Clone tssc repository
-  become: true
   ansible.builtin.git:
     accept_hostkey: true
     force: true
@@ -26,14 +24,12 @@
     GIT_SSL_NO_VERIFY: "true"
 
 - name: Set environment type to development
-  become: true
   ansible.builtin.replace:
     path: ~/tssc_cli/installer/charts/tssc-dh/templates/app-config-content.yaml
     regexp: '^  environment: production'
     replace: '  environment: development'
 
 - name: Create default authentication mode
-  become: true
   replace:
     path: ~/tssc_cli/installer/charts/tssc-dh/templates/app-config-content.yaml
     regexp: '(^\s*providers:)[\s\S]*?(?=^backend:)'
@@ -46,7 +42,6 @@
         {% endraw %}
 
 - name: Insert fix for orchestrator
-  become: true
   when: ocp4_workload_advanced_developer_suite_dh_orchestrator_enabled
   ansible.builtin.replace:
     path: ~/tssc_cli/installer/charts/tssc-dh/templates/backstage.yaml
@@ -71,7 +66,6 @@
     rm -rf ${VERSION}.linux-amd64.tar.gz
 
 - name: Build tssc cli and create config
-  become: true
   ansible.builtin.shell: |
     make build
     ./bin/tssc config --create
@@ -86,7 +80,6 @@
     file: ./setup_platform_dependencies.yml
 
 - name: Deploy platform
-  become: true
   ansible.builtin.shell: |
     ./bin/tssc deploy
   args:

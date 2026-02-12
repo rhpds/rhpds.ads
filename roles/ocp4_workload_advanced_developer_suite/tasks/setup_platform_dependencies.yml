@@ -2,8 +2,6 @@
 - name: Check operator channels
   ansible.builtin.include_tasks:
     file: ./check_subscriptions.yml
-    apply:
-      become: true
   loop:
   - subscription: trustedProfileAnalyzer
     operator: rhtpa-operator
@@ -31,7 +29,6 @@
     _gitlab_root_token: "{{ r_root_token.resources[0].data.token | b64decode }}"
 
 - name: Integrate gitlab
-  become: true
   ansible.builtin.shell: |
     ./bin/tssc integration gitlab \
     --token="{{ _gitlab_root_token }}" \
