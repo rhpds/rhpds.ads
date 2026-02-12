@@ -55,7 +55,7 @@
       \1        value: '30000000'
       \1\2
 
-- name: Install required cli's
+- name: Install and configure prerequisites for building tssc cli
   ansible.builtin.shell: |
     dnf install make -y
     VERSION={{ ocp4_workload_advanced_developer_suite_go_version }}
@@ -64,12 +64,19 @@
     tar -C /usr/local -xzf ${VERSION}.linux-amd64.tar.gz
     ln -sf /usr/local/go/bin/go /usr/bin/go
     rm -rf ${VERSION}.linux-amd64.tar.gz
+    echo '1'
+    ls -al /home/runner
+    echo '2'
+    ls -al /root
+    echo '3'
+    oc login --token={{ openshift_cluster_admin_token }} {{ openshift_api_url }} --insecure-skip-tls-verify
+    ls -al /home
+    ls -al /root
+    mkdir -p /root/.kube
+    cp /home/runner/.kube/config /root/.kube/config
 
 - name: Build tssc cli and create config
   ansible.builtin.shell: |
-    ls -al /home/runner
-    mkdir -p /root/.kube
-    cp /home/runner/.kube/config /root/.kube/config
     make build
     ./bin/tssc config --create
     ./bin/tssc config --get > config.yaml && ./bin/tssc config --delete
