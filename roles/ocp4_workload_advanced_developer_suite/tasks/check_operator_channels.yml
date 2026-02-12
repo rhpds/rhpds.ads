@@ -1,0 +1,53 @@
+---
+- name: Read values.yaml file
+  ansible.builtin.slurp:
+    path: ~/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
+  register: _values_file
+
+- name: Parse values.yaml
+  set_fact:
+    _values_content: >-
+      {{ _values_file.content | b64decode | from_yaml }}
+
+- name: Get current channel from values.yaml
+  set_fact:
+    _current_channel: >-
+      {{ _values_content.subscriptions[item.subscription].channel }}
+
+- name: Get available channels from redhat-operators
+  shell: |
+    oc get packagemanifest {{ item.operator }} -n openshift-marketplace -o jsonpath='{.status.channels[*].name}'
+  register: _channels_output
+
+- name: Get default channel
+  shell: |
+    oc get packagemanifest {{ item.operator }} -n openshift-marketplace -o jsonpath='{.status.defaultChannel}'
+  register: _default_channel_output
+
+- name: Check if current channel exists in packagemanifest
+  set_fact:
+    _channel_exists: >-
+      {{ _current_channel in _channels_output.stdout.split() }}
+
+- name: Update channel in values content
+  set_fact:
+    _updated_values: >-
+      {{
+        _values_content
+        | combine({
+          'subscriptions': _values_content.subscriptions
+          | combine({
+            item.subscription: _values_content.subscriptions[item.subscription]
+            | combine({
+              'channel': _default_channel_output.stdout
+            })
+          })
+        })
+      }}
+  when: not _channel_exists
+
+- name: Write updated values.yaml
+  ansible.builtin.copy:
+    content: "{{ _updated_values | to_nice_yaml(indent=2) }}"
+    dest: ~/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
+  when: not _channel_exists

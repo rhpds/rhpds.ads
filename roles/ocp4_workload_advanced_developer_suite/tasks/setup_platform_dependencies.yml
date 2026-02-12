@@ -1,4 +1,13 @@
 ---
+- name: Check operator channels
+  ansible.builtin.include_tasks:
+    file: ./check_operator_channels.yml
+    apply:
+      become: true
+  loop:
+  - subscription: trustedProfileAnalyzer
+    operator: rhtpa-operator
+
 - name: Retrieve Gitlab root private token
   kubernetes.core.k8s_info:
     api_version: v1
