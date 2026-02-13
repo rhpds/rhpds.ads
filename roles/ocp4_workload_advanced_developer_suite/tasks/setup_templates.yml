@@ -15,6 +15,8 @@
   ansible.builtin.shell: |
     git config user.email {{ ocp4_workload_advanced_developer_suite_gitlab_root_email }}
     git config user.name {{ ocp4_workload_advanced_developer_suite_gitlab_root_user }}
+  args:
+    chdir: /tmp/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}
 
 - name: Fetch provision data file
   run_once: true
