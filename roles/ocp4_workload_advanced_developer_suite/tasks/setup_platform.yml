@@ -55,6 +55,13 @@
       \1        value: '30000000'
       \1\2
 
+- name: Check operator channels
+  ansible.builtin.include_tasks:
+    file: ./check_subscriptions.yml
+  loop:
+  - subscription: trustedProfileAnalyzer
+    operator: rhtpa-operator
+
 - name: Install and configure prerequisites for building tssc cli
   ansible.builtin.shell: |
     dnf install make -y
