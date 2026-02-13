@@ -1,7 +1,7 @@
 ---
 - name: Read values.yaml file
   ansible.builtin.slurp:
-    path: ~/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
+    path: /tmp/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
   register: _values_file
 
 - name: Parse values.yaml
@@ -49,5 +49,9 @@
 - name: Write updated values.yaml
   ansible.builtin.copy:
     content: "{{ _updated_values | to_nice_yaml(indent=2) }}"
-    dest: /home/runner/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
+    dest: /tmp/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
   when: not _channel_exists
+
+- name: Show updated file
+  ansible.builtin.shell: |
+    cat /tmp/tssc_cli/installer/charts/tssc-subscriptions/values.yaml

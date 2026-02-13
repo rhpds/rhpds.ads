@@ -35,7 +35,7 @@
     --host="{{ _gitlab_host }}" \
     --group="{{ ocp4_workload_advanced_developer_suite_tssc_cli_gitlab_group }}"
   args:
-    chdir: ~/tssc_cli
+    chdir: /tmp/tssc_cli
 
 - name: Wait until Jenkins is fully up and running
   k8s_info:
@@ -78,7 +78,7 @@
     --url="{{ _jenkins_url }}" \
     --username="{{ ocp4_workload_advanced_developer_suite_jenkins_admin_user }}"
   args:
-    chdir: ~/tssc_cli
+    chdir: /tmp/tssc_cli
 
 - name: Get Quay database pod and ensure it's running
   kubernetes.core.k8s_info:
@@ -224,4 +224,4 @@
     --token="{{ _quay_token}}" \
     --url="{{ _quay_url }}"
   args:
-    chdir: ~/tssc_cli
+    chdir: /tmp/tssc_cli
