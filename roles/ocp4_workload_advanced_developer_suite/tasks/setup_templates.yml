@@ -6,7 +6,7 @@
     repo: https://root:{{ _gitlab_root_token }}@{{ _gitlab_host }}/{{
       ocp4_workload_advanced_developer_suite_dh_catalog_locations.group }}/{{
       ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}
-    dest: "~/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}"
+    dest: /tmp/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}
     version: "{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.branch }}"
   environment:
     GIT_SSL_NO_VERIFY: "true"
@@ -14,7 +14,7 @@
 - name: Fetch provision data file
   run_once: true
   ansible.builtin.fetch:
-    src: "~/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}/component-rhpds.yaml"
+    src: /tmp/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}/component-rhpds.yaml
     dest: /tmp/component-rhpds.yaml
     flat: true
     fail_on_missing: true
@@ -22,7 +22,7 @@
 - name: Apply template provision data file
   ansible.builtin.template:
     src: /tmp/component-rhpds.yaml
-    dest: "~/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}/component-rhpds.yaml"
+    dest: /tmp/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}/component-rhpds.yaml
     mode: "0660"
     owner: "{{ ansible_user }}"
   vars:
@@ -33,7 +33,7 @@
   ansible.builtin.shell: |
     git add . && git commit -m "Update file with provision data" && git push
   args:
-    chdir: ~/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}
+    chdir: /tmp/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}
   ignore_errors: true
 
 - name: Create Gitops auth resources
