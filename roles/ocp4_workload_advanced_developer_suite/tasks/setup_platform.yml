@@ -13,6 +13,19 @@
   args:
     chdir: /tmp
 
+- name: Install and configure prerequisites for building tssc cli
+  ansible.builtin.shell: |
+    dnf install make -y
+    VERSION={{ ocp4_workload_advanced_developer_suite_go_version }}
+    wget https://go.dev/dl/${VERSION}.linux-amd64.tar.gz
+    rm -rf /usr/local/go /usr/bin/go
+    tar -C /usr/local -xzf ${VERSION}.linux-amd64.tar.gz
+    ln -sf /usr/local/go/bin/go /usr/bin/go
+    rm -rf ${VERSION}.linux-amd64.tar.gz
+    oc login --token={{ openshift_cluster_admin_token }} {{ openshift_api_url }} --insecure-skip-tls-verify
+    mkdir -p /root/.kube
+    cp /home/runner/.kube/config /root/.kube/config
+
 - name: Clone tssc repository
   ansible.builtin.git:
     accept_hostkey: true
@@ -61,19 +74,6 @@
   loop:
   - subscription: trustedProfileAnalyzer
     operator: rhtpa-operator
-
-- name: Install and configure prerequisites for building tssc cli
-  ansible.builtin.shell: |
-    dnf install make -y
-    VERSION={{ ocp4_workload_advanced_developer_suite_go_version }}
-    wget https://go.dev/dl/${VERSION}.linux-amd64.tar.gz
-    rm -rf /usr/local/go /usr/bin/go
-    tar -C /usr/local -xzf ${VERSION}.linux-amd64.tar.gz
-    ln -sf /usr/local/go/bin/go /usr/bin/go
-    rm -rf ${VERSION}.linux-amd64.tar.gz
-    oc login --token={{ openshift_cluster_admin_token }} {{ openshift_api_url }} --insecure-skip-tls-verify
-    mkdir -p /root/.kube
-    cp /home/runner/.kube/config /root/.kube/config
 
 - name: Build tssc cli and create config
   ansible.builtin.shell: |
