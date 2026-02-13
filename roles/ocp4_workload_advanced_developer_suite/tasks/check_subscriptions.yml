@@ -49,6 +49,5 @@
 - name: Write updated values.yaml
   ansible.builtin.copy:
     content: "{{ _updated_values | to_nice_yaml(indent=2) }}"
-    dest: ~/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
+    dest: /home/runner/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
   when: not _channel_exists
-  delegate_to: localhost
