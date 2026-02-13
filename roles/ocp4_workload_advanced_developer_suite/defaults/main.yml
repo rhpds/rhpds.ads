@@ -76,6 +76,8 @@ ocp4_workload_advanced_developer_suite_dh_orchestrator_plugins_enable:
   package: "./dynamic-plugins/dist/backstage-plugin-signals-backend-dynamic"
 
 ocp4_workload_advanced_developer_suite_gitlab_namespace: gitlab
+ocp4_workload_advanced_developer_suite_gitlab_root_email: root@demo.redhat.com
+ocp4_workload_advanced_developer_suite_gitlab_root_user: root
 ocp4_workload_advanced_developer_suite_dh_catalog_locations:
   repository: tssc-developer-hub-configuration
   branch: main
