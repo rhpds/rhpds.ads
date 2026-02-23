@@ -123,5 +123,5 @@
 - name: Create Trusted Artifact Signer instance
   kubernetes.core.k8s:
     state: present
-    template: templates/tas-instance.yml.j2'
+    template: tas-instance.yml.j2
     namespace: "{{ ocp4_workload_trusted_artifact_signer_namespace }}"
