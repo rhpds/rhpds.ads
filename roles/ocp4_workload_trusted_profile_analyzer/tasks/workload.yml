@@ -36,9 +36,9 @@
     namespace: "{{ ocp4_workload_trusted_profile_analyzer_namespace }}"
     template: "{{ item }}"
   loop:
-  - keycloak-tpa-realm.yml
-  - tpa-cli-credentials.yml
-  - tpa-instance.yml
+  - keycloak-tpa-realm.yml.j2
+  - tpa-cli-credentials.yml.j2
+  - tpa-instance.yml.j2
 
 - name: Save user information for TPA configuration
   agnosticd.core.agnosticd_user_info:
