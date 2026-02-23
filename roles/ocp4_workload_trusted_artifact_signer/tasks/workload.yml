@@ -1,0 +1,137 @@
+---
+# Install Trusted Artifact Signer Operator
+- name: Install Trusted Artifact Signer operator
+  ansible.builtin.include_role:
+    name: install_operator
+  vars:
+    install_operator_name: rhtas-operator
+    install_operator_namespace: "{{ ocp4_workload_trusted_artifact_signer_operator_namespace }}"
+    install_operator_channel: "{{ ocp4_workload_trusted_artifact_signer_channel }}"
+    install_operator_automatic_install_plan_approval: "{{ ocp4_workload_trusted_artifact_signer_automatic_install_plan_approval }}"
+    install_operator_starting_csv: "{{ ocp4_workload_trusted_artifact_signer_starting_csv }}"
+    install_operator_catalogsource_setup: "{{ ocp4_workload_trusted_artifact_signer_use_catalog_source }}"
+    install_operator_catalogsource_image: "{{ ocp4_workload_trusted_artifact_signer_catalogsource_image }}"
+    install_operator_catalogsource_image_tag: "{{ ocp4_workload_trusted_artifact_signer_catalogsource_tag }}"
+
+# Get Keycloak admin password
+- name: Get Keycloak admin password
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: keycloak-initial-admin
+    namespace: "{{ ocp4_workload_trusted_artifact_signer_keycloak_namespace }}"
+  register: r_keycloak_secret
+
+- name: Set Keycloak admin password
+  ansible.builtin.set_fact:
+    ocp4_workload_trusted_artifact_signer_keycloak_admin_password: "{{ r_keycloak_secret.resources[0].data.password | b64decode }}"
+
+# Retrieve OpenShift ingress domain
+- name: Retrieve Ingress config
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Ingress
+    name: cluster
+  register: r_ingress_config
+
+- name: Set OpenShift ingress domain
+  ansible.builtin.set_fact:
+    openshift_cluster_ingress_domain: "{{ r_ingress_config.resources[0].spec.domain }}"
+
+# Get Keycloak admin token via API
+- name: Get Keycloak admin token
+  ansible.builtin.uri:
+    url: "https://sso.{{ openshift_cluster_ingress_domain }}/realms/master/protocol/openid-connect/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: admin
+      password: "{{ ocp4_workload_trusted_artifact_signer_keycloak_admin_password }}"
+      grant_type: password
+      client_id: admin-cli
+    status_code: 200
+    validate_certs: false
+  register: r_keycloak_admin_token
+  retries: 3
+  delay: 10
+
+- name: Set Keycloak admin token
+  ansible.builtin.set_fact:
+    ocp4_workload_trusted_artifact_signer_keycloak_token: "{{ r_keycloak_admin_token.json.access_token }}"
+
+# Create Keycloak client via API
+- name: Create Keycloak client for Trusted Artifact Signer
+  ansible.builtin.uri:
+    url: "https://sso.{{ openshift_cluster_ingress_domain }}/admin/realms/{{ ocp4_workload_trusted_artifact_signer_keycloak_realm }}/clients"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ocp4_workload_trusted_artifact_signer_keycloak_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      clientId: "{{ ocp4_workload_trusted_artifact_signer_client_id }}"
+      name: "{{ ocp4_workload_trusted_artifact_signer_client_id }}"
+      description: "Client for Red Hat Trusted Artifact Signer authentication"
+      enabled: true
+      publicClient: true
+      standardFlowEnabled: true
+      implicitFlowEnabled: false
+      directAccessGrantsEnabled: true
+      protocol: openid-connect
+      redirectUris:
+        - "*"
+        - "urn:ietf:wg:oauth:2.0:oob"
+      defaultClientScopes:
+        - profile
+        - email
+      protocolMappers:
+        - name: email
+          protocol: openid-connect
+          protocolMapper: oidc-usermodel-property-mapper
+          config:
+            claim.name: email
+            id.token.claim: 'true'
+            jsonType.label: String
+            user.attribute: email
+            userinfo.token.claim: 'true'
+        - name: email-verified
+          protocol: openid-connect
+          protocolMapper: oidc-usermodel-property-mapper
+          config:
+            claim.name: email-verified
+            id.token.claim: 'true'
+            user.attribute: emailVerified
+            userinfo.token.claim: 'true'
+        - name: audience
+          protocol: openid-connect
+          protocolMapper: oidc-hardcoded-claim-mapper
+          config:
+            access.token.claim: 'true'
+            claim.name: aud
+            claim.value: "{{ ocp4_workload_trusted_artifact_signer_client_id }}"
+            id.token.claim: 'true'
+            userinfo.token.claim: 'true'
+      attributes:
+        request.object.signature.alg: RS256
+        user.info.response.signature.alg: RS256
+    status_code: [201, 409]
+    validate_certs: false
+  retries: 3
+  delay: 10
+
+# Create TAS namespace
+- name: Create Trusted Artifact Signer namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ ocp4_workload_trusted_artifact_signer_namespace }}"
+
+# Create Securesign instance
+- name: Create Trusted Artifact Signer instance
+  kubernetes.core.k8s:
+    state: present
+    template: templates/tas-instance.yml.j2'
+    namespace: "{{ ocp4_workload_trusted_artifact_signer_namespace }}"

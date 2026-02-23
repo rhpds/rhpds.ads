@@ -1,0 +1,54 @@
+---
+- name: Install Trusted Profile Analyzer Operator
+  ansible.builtin.include_role:
+    name: install_operator
+  vars:
+    install_operator_name: rhtpa-operator
+    install_operator_namespace: "{{ ocp4_workload_trusted_profile_analyzer_namespace }}"
+    install_operator_manage_namespaces:
+    - "{{ ocp4_workload_trusted_profile_analyzer_namespace }}"
+    install_operator_channel: "{{ ocp4_workload_trusted_profile_analyzer_channel }}"
+    install_operator_automatic_install_plan_approval: "{{ ocp4_workload_trusted_profile_analyzer_automatic_install_plan_approval | default('true') }}"
+    install_operator_starting_csv: "{{ ocp4_workload_trusted_profile_analyzer_starting_csv }}"
+    install_operator_catalogsource_setup: "{{ ocp4_workload_trusted_profile_analyzer_use_catalog_source }}"
+    install_operator_catalogsource_image: "{{ ocp4_workload_trusted_profile_analyzer_catalogsource_image }}"
+    install_operator_catalogsource_image_tag: "{{ ocp4_workload_trusted_profile_analyzer_catalogsource_tag }}"
+
+- name: Generate pgsql user password
+  ansible.builtin.set_fact:
+    _ocp4_workload_trusted_profile_analyzer_pgsql_password: >-
+      {{ lookup('password', '/dev/null chars=ascii_letters,digits length=10') }}
+
+- name: Create Trusted Profile Analyzer PSQL deployment
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ ocp4_workload_trusted_profile_analyzer_namespace }}"
+    template: "{{ item }}"
+  loop:
+  - postgres-database-user-secret.yml.j2
+  - postgres-database-pvc.yml.j2
+  - postgres-database-deployment.yml.j2
+  - postgres-database-svc.yml.j2
+
+- name: Template out secret and TPA CR
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ ocp4_workload_trusted_profile_analyzer_namespace }}"
+    template: "{{ item }}"
+  loop:
+  - keycloak-tpa-realm.yml
+  - tpa-cli-credentials.yml
+  - tpa-instance.yml
+
+- name: Save user information for TPA configuration
+  agnosticd.core.agnosticd_user_info:
+    user: "{{ ocp4_workload_trusted_profile_analyzer_username_base }}{{ n + 1 }}"
+    data:
+      tpa_admin_username: "{{ ocp4_workload_trusted_profile_analyzer_admin_username }}"
+      tpa_admin_password: "{{ ocp4_workload_trusted_profile_analyzer_admin_password }}"
+      tpa_cli_client_secret: "{{ ocp4_workload_trusted_profile_analyzer_keycloak_cli_client_secret }}"
+      tpa_realm: "{{ ocp4_workload_trusted_profile_analyzer_keycloak_realm }}"
+      tpa_server_url: https://server-{{ ocp4_workload_trusted_profile_analyzer_namespace }}.{{ openshift_cluster_ingress_domain }}
+  loop: "{{ range(0, ocp4_workload_trusted_profile_analyzer_num_users | int) | list }}"
+  loop_control:
+    loop_var: n
