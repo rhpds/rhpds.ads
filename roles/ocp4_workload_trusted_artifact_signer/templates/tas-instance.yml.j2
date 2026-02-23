@@ -11,14 +11,10 @@ spec:
   fulcio:
     certificate:
       commonName: fulcio.hostname
-      organizationEmail: trusted-artifact-signer@company.dev
+      organizationEmail: trusted-artifact-signer@demo.redhat.com
       organizationName: TSSC
     config:
       OIDCIssuers:
-        - ClientID: {{ ocp4_workload_trusted_artifact_signer_client_id }}
-          Issuer: 'https://sso.{{ openshift_cluster_ingress_domain }}/realms/{{ ocp4_workload_trusted_artifact_signer_chains_realm }}'
-          IssuerURL: 'https://sso.{{ openshift_cluster_ingress_domain }}/realms/{{ ocp4_workload_trusted_artifact_signer_chains_realm }}'
-          Type: email
         - ClientID: {{ ocp4_workload_trusted_artifact_signer_client_id }}
           Issuer: 'https://sso.{{ openshift_cluster_ingress_domain }}/realms/{{ ocp4_workload_trusted_artifact_signer_sso_realm }}'
           IssuerURL: 'https://sso.{{ openshift_cluster_ingress_domain }}/realms/{{ ocp4_workload_trusted_artifact_signer_sso_realm }}'

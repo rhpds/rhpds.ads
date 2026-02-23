@@ -26,17 +26,6 @@
   ansible.builtin.set_fact:
     ocp4_workload_trusted_artifact_signer_keycloak_admin_password: "{{ r_keycloak_secret.resources[0].data.password | b64decode }}"
 
-# Retrieve OpenShift ingress domain
-- name: Retrieve Ingress config
-  kubernetes.core.k8s_info:
-    api_version: config.openshift.io/v1
-    kind: Ingress
-    name: cluster
-  register: r_ingress_config
-
-- name: Set OpenShift ingress domain
-  ansible.builtin.set_fact:
-    openshift_cluster_ingress_domain: "{{ r_ingress_config.resources[0].spec.domain }}"
 
 # Get Keycloak admin token via API
 - name: Get Keycloak admin token
@@ -62,7 +51,7 @@
 # Create Keycloak client via API
 - name: Create Keycloak client for Trusted Artifact Signer
   ansible.builtin.uri:
-    url: "https://sso.{{ openshift_cluster_ingress_domain }}/admin/realms/{{ ocp4_workload_trusted_artifact_signer_keycloak_realm }}/clients"
+    url: "https://sso.{{ openshift_cluster_ingress_domain }}/admin/realms/{{ ocp4_workload_trusted_artifact_signer_sso_realm }}/clients"
     method: POST
     headers:
       Authorization: "Bearer {{ ocp4_workload_trusted_artifact_signer_keycloak_token }}"
