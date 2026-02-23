@@ -21,7 +21,3 @@ ocp4_workload_trusted_profile_analyzer_admin_password: "openshift"
 
 # TPA Client configuration
 ocp4_workload_trusted_profile_analyzer_keycloak_cli_client_secret: "5460cc91-4e20-4edd-881c-b15b169f8a79"
-
-# User configuration
-ocp4_workload_trusted_profile_analyzer_username_base: user
-ocp4_workload_trusted_profile_analyzer_num_users: 1
