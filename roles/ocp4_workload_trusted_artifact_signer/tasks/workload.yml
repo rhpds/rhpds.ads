@@ -24,7 +24,8 @@
 
 - name: Set Keycloak admin password
   ansible.builtin.set_fact:
-    ocp4_workload_trusted_artifact_signer_keycloak_admin_password: "{{ r_keycloak_secret.resources[0].data.password | b64decode }}"
+    _ocp4_workload_trusted_artifact_signer_keycloak_admin_username: "{{ r_keycloak_secret.resources[0].data.username | b64decode }}"
+    _ocp4_workload_trusted_artifact_signer_keycloak_admin_password: "{{ r_keycloak_secret.resources[0].data.password | b64decode }}"
 
 
 # Get Keycloak admin token via API
@@ -34,8 +35,8 @@
     method: POST
     body_format: form-urlencoded
     body:
-      username: admin
-      password: "{{ ocp4_workload_trusted_artifact_signer_keycloak_admin_password }}"
+      username: "{{ _ocp4_workload_trusted_artifact_signer_keycloak_admin_username }}"
+      password: "{{ _ocp4_workload_trusted_artifact_signer_keycloak_admin_password }}"
       grant_type: password
       client_id: admin-cli
     status_code: 200
@@ -46,7 +47,7 @@
 
 - name: Set Keycloak admin token
   ansible.builtin.set_fact:
-    ocp4_workload_trusted_artifact_signer_keycloak_token: "{{ r_keycloak_admin_token.json.access_token }}"
+    _ocp4_workload_trusted_artifact_signer_keycloak_token: "{{ r_keycloak_admin_token.json.access_token }}"
 
 # Create Keycloak client via API
 - name: Create Keycloak client for Trusted Artifact Signer
@@ -54,7 +55,7 @@
     url: "https://sso.{{ openshift_cluster_ingress_domain }}/admin/realms/{{ ocp4_workload_trusted_artifact_signer_sso_realm }}/clients"
     method: POST
     headers:
-      Authorization: "Bearer {{ ocp4_workload_trusted_artifact_signer_keycloak_token }}"
+      Authorization: "Bearer {{ _ocp4_workload_trusted_artifact_signer_keycloak_token }}"
       Content-Type: application/json
     body_format: json
     body:
