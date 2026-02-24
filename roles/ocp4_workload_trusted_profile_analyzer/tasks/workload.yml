@@ -48,6 +48,3 @@
       tpa_cli_client_secret: "{{ ocp4_workload_trusted_profile_analyzer_keycloak_cli_client_secret }}"
       tpa_realm: "{{ ocp4_workload_trusted_profile_analyzer_keycloak_realm }}"
       tpa_server_url: https://server-{{ ocp4_workload_trusted_profile_analyzer_namespace }}.{{ openshift_cluster_ingress_domain }}
-  loop: "{{ range(0, ocp4_workload_trusted_profile_analyzer_num_users | int) | list }}"
-  loop_control:
-    loop_var: n
