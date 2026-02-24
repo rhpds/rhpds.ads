@@ -30,13 +30,33 @@
   - postgres-database-deployment.yml.j2
   - postgres-database-svc.yml.j2
 
+- name: Template out TPA Realm
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ ocp4_workload_trusted_profile_analyzer_keycloak_namespace }}"
+    template: "{{ item }}"
+  loop:
+  - keycloak-tpa-realm.yml.j2
+
+- name: Wait for TPA Realm Import to complete
+  kubernetes.core.k8s_info:
+    api_version: k8s.keycloak.org/v2alpha1
+    kind: KeycloakRealmImport
+    name: "{{ ocp4_workload_trusted_profile_analyzer_keycloak_realm }}"
+    namespace: sso
+  register: r_keycloak_realm_import
+  until:
+    - r_keycloak_realm_import.resources | length > 0
+    - r_keycloak_realm_import.resources[0].status.conditions | selectattr('type', 'equalto', 'Done') | selectattr('status', 'equalto', 'True') | list | length > 0
+  retries: 30
+  delay: 10
+
 - name: Template out secret and TPA CR
   kubernetes.core.k8s:
     state: present
     namespace: "{{ ocp4_workload_trusted_profile_analyzer_namespace }}"
     template: "{{ item }}"
   loop:
-  - keycloak-tpa-realm.yml.j2
   - tpa-cli-credentials.yml.j2
   - tpa-instance.yml.j2
 

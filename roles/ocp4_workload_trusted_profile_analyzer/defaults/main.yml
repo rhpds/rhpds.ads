@@ -15,6 +15,7 @@ ocp4_workload_trusted_profile_analyzer_pgsql_password: "password"
 
 # Keycloak configuration
 ocp4_workload_trusted_profile_analyzer_keycloak_realm: tpa
+ocp4_workload_trusted_profile_analyzer_keycloak_namespace: sso
 ocp4_workload_trusted_profile_analyzer_admin_username: "tpa-admin"
 ocp4_workload_trusted_profile_analyzer_admin_password: "openshift"
 
