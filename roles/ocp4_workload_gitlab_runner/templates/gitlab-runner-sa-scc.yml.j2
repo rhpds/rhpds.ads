@@ -1,0 +1,34 @@
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: true
+allowedCapabilities: 
+- SETFCAP 
+- MKNOD
+apiVersion: security.openshift.io/v1
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+kind: SecurityContextConstraints
+metadata:
+  name: {{ ocp4_workload_gitlab_runner_service_account }}-scc
+  namespace: {{ ocp4_workload_gitlab_runner_namespace }}
+priority: 5
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- KILL
+runAsUser:
+  type: MustRunAs
+  uid: 0
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:{{ ocp4_workload_gitlab_runner_namespace }}:{{ ocp4_workload_gitlab_runner_service_account }}
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
