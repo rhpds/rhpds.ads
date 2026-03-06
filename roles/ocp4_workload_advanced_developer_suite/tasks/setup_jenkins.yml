@@ -84,6 +84,18 @@
   ansible.builtin.set_fact:
     _ocp_api_url: "{{ r_infra.resources[0].status.apiServerURL }}"
 
+- name: Get cluster DNS service IP
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    name: dns-default
+    namespace: openshift-dns
+  register: r_dns_service
+
+- name: Set cluster DNS IP fact
+  ansible.builtin.set_fact:
+    _cluster_dns_ip: "{{ r_dns_service.resources[0].spec.clusterIP }}"
+
 - name: Copy Nginx webhook proxy pass config to host
   ansible.builtin.template:
     src: templates/nginx-webhook-proxy-pass.conf.j2
