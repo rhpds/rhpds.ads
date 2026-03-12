@@ -1,18 +1,19 @@
 ---
 - name: Wait for GitLab init job to complete
-  k8s_info:
-    api_version: batch/v1
-    kind: Job
-    name: initialize-gitlab
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
     namespace: "{{ ocp4_workload_redhat_developer_hub_gitlab_namespace }}"
-  register: r_gitlab
-  retries: 180
-  delay: 10
+    label_selectors:
+    - batch.kubernetes.io/job-name = initialize-gitlab
   until:
-  - r_gitlab.resources | length > 0
-  - r_gitlab.resources[0] | json_query(query) is true
-  vars:
-    query: "status.conditions[?(@.type==`Complete`)].status | [0] == `True`"
+    - r_gitlab_init_info is defined
+    - r_gitlab_init_info.resources is defined
+    - r_gitlab_init_info.resources | length > 0
+    - r_gitlab_init_info.resources | map(attribute='status.phase', default='') | select('equalto', 'Succeeded') | list | length > 0
+  register: r_gitlab_init_info
+  retries: 240
+  delay: 10
 
 - name: Retrieve root private token
   kubernetes.core.k8s_info:
