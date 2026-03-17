@@ -16,44 +16,44 @@ spec:
             image: registry.redhat.io/openshift4/ose-tools-rhel9@sha256:8037187950e7374a9c9bec4996033c9b24ce374920ef29047d4f63b4c20f3e6b
             command:
               - /bin/bash
-              args:
-                - '-ec'
-                - |-
-                  POD=$(oc get pod -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -l rhdh.redhat.com/app=backstage-developer-hub -o jsonpath='{.items[0].metadata.name}' || true)
-                  echo "Found pod $POD"
-                  if [[ ! -z "${POD}" ]]; then
+            args:
+              - '-ec'
+              - |-
+                POD=$(oc get pod -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -l rhdh.redhat.com/app=backstage-developer-hub -o jsonpath='{.items[0].metadata.name}' || true)
+                echo "Found pod $POD"
+                if [[ ! -z "${POD}" ]]; then
 
-                    POD_PHASE=$(oc get pod $POD -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -o json | jq -r '.status.phase')
+                  POD_PHASE=$(oc get pod $POD -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -o json | jq -r '.status.phase')
 
-                    echo "Pod $POD in phase $POD_PHASE"
+                  echo "Pod $POD in phase $POD_PHASE"
 
-                    if [[ "${POD_PHASE}" == "Pending" ]]; then
+                  if [[ "${POD_PHASE}" == "Pending" ]]; then
 
-                      oc logs $POD -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -c install-dynamic-plugins --ignore-errors=true > /tmp/log.txt
+                    oc logs $POD -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -c install-dynamic-plugins --ignore-errors=true > /tmp/log.txt
 
-                      CONTAINER_LOG_GREP=$(cat /tmp/log.txt | grep '======= Waiting for lock release' || true)
+                    CONTAINER_LOG_GREP=$(cat /tmp/log.txt | grep '======= Waiting for lock release' || true)
 
-                      LINE_COUNT=$(</tmp/log.txt wc -l || echo 0)
+                    LINE_COUNT=$(</tmp/log.txt wc -l || echo 0)
 
-                      if [[ "$LINE_COUNT" -eq 0 || ( "$LINE_COUNT" -lt 2 && ! -z "${CONTAINER_LOG_GREP// }")  ]]; then
+                    if [[ "$LINE_COUNT" -eq 0 || ( "$LINE_COUNT" -lt 2 && ! -z "${CONTAINER_LOG_GREP// }")  ]]; then
 
-                        echo "Deleting lock file..."
+                      echo "Deleting lock file..."
 
-                        oc exec -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} $POD -c install-dynamic-plugins -- rm -f /dynamic-plugins-root/install-dynamic-plugins.lock
-
-                      else
-
-                        echo "Line count and grep returned a false.  Nothing to do..."
-
-                      fi
+                      oc exec -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} $POD -c install-dynamic-plugins -- rm -f /dynamic-plugins-root/install-dynamic-plugins.lock
 
                     else
 
-                      echo "Nothing to do..."
+                      echo "Line count and grep returned a false.  Nothing to do..."
 
                     fi
 
+                  else
+
+                    echo "Nothing to do..."
+
                   fi
-                  echo "Done!"
+
+                fi
+                echo "Done!"
           restartPolicy: Never
           serviceAccountName: job-runner
