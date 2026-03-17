@@ -1,0 +1,10 @@
+---
+- name: Create job runner resources
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ ocp4_workload_advanced_developer_suite_dh_namespace }}"
+    definition: "{{ lookup('template', item) | from_yaml }}"
+  loop:
+  - sa-job-runner.yml.j2
+  - crb-job-runner-edit.yml.j2
+  - cronjob-delete-dynamic-plugin-lock.yml.j2

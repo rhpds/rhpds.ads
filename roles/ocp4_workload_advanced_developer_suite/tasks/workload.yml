@@ -76,6 +76,7 @@
   - ./setup_jenkins.yml
   - ./setup_templates.yml
   - ./setup_showroom.yml
+  - ./setup_job_runner.yml
 
 - name: Update dynamic plugins
   ansible.builtin.include_tasks:
