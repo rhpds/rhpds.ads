@@ -15,9 +15,9 @@ ACS_ENDPOINT=$(oc get -n tssc secret tssc-acs-integration -o json | jq -r '.data
 
 # SBOM automatic upload creds
 TRUSTIFICATION_BOMBASTIC_API_URL=$(oc get -n tssc secrets/tssc-trustification-integration --template={{.data.bombastic_api_url}} | base64 -d)
-TRUSTIFICATION_OIDC_ISSUER_URL=$(oc get -n tssc secrets/tssc-trustification-integration --template={{.data.oidc_issuer_url}} | base64 -d)
-TRUSTIFICATION_OIDC_CLIENT_ID=$(oc get -n tssc secrets/tssc-trustification-integration --template={{.data.oidc_client_id}} | base64 -d)
-TRUSTIFICATION_OIDC_CLIENT_SECRET=$(oc get -n tssc secrets/tssc-trustification-integration --template={{.data.oidc_client_secret}} | base64 -d)
+TRUSTIFICATION_OIDC_ISSUER_URL=$(oc get -n tssc secrets/tssc-trustificationauth-integration --template={{.data.oidc_issuer_url}} | base64 -d)
+TRUSTIFICATION_OIDC_CLIENT_ID=$(oc get -n tssc secrets/tssc-trustificationauth-integration --template={{.data.oidc_client_id}} | base64 -d)
+TRUSTIFICATION_OIDC_CLIENT_SECRET=$(oc get -n tssc secrets/tssc-trustificationauth-integration --template={{.data.oidc_client_secret}} | base64 -d)
 TRUSTIFICATION_SUPPORTED_CYCLONEDX_VERSION=$(oc get -n tssc secrets/tssc-trustification-integration --template={{.data.supported_cyclonedx_version}} | base64 -d)
 
 
