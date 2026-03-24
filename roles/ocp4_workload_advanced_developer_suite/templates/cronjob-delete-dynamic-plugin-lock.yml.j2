@@ -19,41 +19,38 @@ spec:
             args:
               - '-ec'
               - |-
-                POD=$(oc get pod -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -l rhdh.redhat.com/app=backstage-developer-hub -o jsonpath='{.items[0].metadata.name}' || true)
-                echo "Found pod $POD"
-                if [[ ! -z "${POD}" ]]; then
-
-                  POD_PHASE=$(oc get pod $POD -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -o json | jq -r '.status.phase')
-
-                  echo "Pod $POD in phase $POD_PHASE"
-
-                  if [[ "${POD_PHASE}" == "Pending" ]]; then
-
-                    oc logs $POD -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} -c install-dynamic-plugins --ignore-errors=true > /tmp/log.txt
-
-                    CONTAINER_LOG_GREP=$(cat /tmp/log.txt | grep '======= Waiting for lock release' || true)
-
-                    LINE_COUNT=$(</tmp/log.txt wc -l || echo 0)
-
-                    if [[ "$LINE_COUNT" -eq 0 || ( "$LINE_COUNT" -lt 2 && ! -z "${CONTAINER_LOG_GREP// }")  ]]; then
-
-                      echo "Deleting lock file..."
-
-                      oc exec -n {{ ocp4_workload_advanced_developer_suite_dh_namespace }} $POD -c install-dynamic-plugins -- rm -f /dynamic-plugins-root/install-dynamic-plugins.lock
-
-                    else
-
-                      echo "Line count and grep returned a false.  Nothing to do..."
-
-                    fi
-
-                  else
-
-                    echo "Nothing to do..."
-
-                  fi
-
+                PODS=$(oc get pod -n tssc-dh -l rhdh.redhat.com/app=backstage-developer-hub -o jsonpath='{.items[*].metadata.name}' || true)                                       
+                                                                                                                                                                                   
+                if [[ -z "${PODS}" ]]; then                                                                                                                                        
+                  echo "No pods found matching label"                                                                                                                              
+                  exit 0                                                                                                                                                           
                 fi
+                                                                                                                                                                                   
+                echo "Found pods: $PODS"                                                                                                                                           
+                                                                                                                                                                                   
+                for POD in $PODS; do                                                                                                                                               
+                  echo "===== Processing pod: $POD ====="
+                                                                                                                                                                                   
+                  POD_PHASE=$(oc get pod $POD -n tssc-dh -o json | jq -r '.status.phase')                                                                                          
+                  echo "Pod $POD in phase $POD_PHASE"                                                                                                                              
+                                                                                                                                                                                   
+                  if [[ "${POD_PHASE}" == "Pending" ]]; then                                                                                                                       
+                    oc logs $POD -n tssc-dh -c install-dynamic-plugins --ignore-errors=true > /tmp/log-${POD}.txt                                                                  
+                                                                                                                                                                                   
+                    CONTAINER_LOG_GREP=$(cat /tmp/log-${POD}.txt | grep '======= Waiting for lock release' || true)                                                                
+                    LINE_COUNT=$(</tmp/log-${POD}.txt wc -l || echo 0)                                                                                                             
+                                                                                                                                                                                   
+                    if [[ "$LINE_COUNT" -eq 0 || ( "$LINE_COUNT" -lt 2 && ! -z "${CONTAINER_LOG_GREP// }") ]]; then                                                                
+                      echo "Deleting lock file for pod $POD..."                                                                                                                    
+                      oc exec -n tssc-dh $POD -c install-dynamic-plugins -- rm -f /dynamic-plugins-root/install-dynamic-plugins.lock                                               
+                    else                                                                                                                                                           
+                      echo "Line count and grep returned a false for pod $POD. Nothing to do..."                                                                                   
+                    fi                                                                                                                                                             
+                  else                                                                                                                                                             
+                    echo "Pod $POD not in Pending phase. Nothing to do..."                                                                                                         
+                  fi                                                                                                                                                               
+                done                                                                                                                                                               
+                                                                                                                                                                                   
                 echo "Done!"
           restartPolicy: Never
           serviceAccountName: job-runner
