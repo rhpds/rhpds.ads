@@ -1,0 +1,64 @@
+---
+# Configure GitLab and Quay integrations
+
+# Configure GitLab integration
+- name: Get GitLab route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: gitlab
+    namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
+  register: r_gitlab_route
+
+- name: Get GitLab root token from secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: root-user-personal-token
+    namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
+  register: r_gitlab_secret
+
+- name: Configure GitLab integration via tssc CLI
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      tssc integration gitlab
+      --host {{ r_gitlab_route.resources[0].spec.host }}
+      --port 443
+      --token {{ r_gitlab_secret.resources[0].data.token | b64decode }}
+      --group {{ ocp4_workload_trusted_software_factory_gitlab_group }}
+
+# Configure Quay integration
+- name: Get Quay route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: quay-quay
+    namespace: "{{ ocp4_workload_trusted_software_factory_quay_namespace }}"
+  register: r_quay_route
+
+- name: Get Quay admin token from secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: quay-admin-token
+    namespace: "{{ ocp4_workload_trusted_software_factory_quay_namespace }}"
+  register: r_quay_secret
+
+- name: Set Quay variables
+  ansible.builtin.set_fact:
+    _quay_host: "{{ r_quay_route.resources[0].spec.host }}"
+    _quay_token: "{{ r_quay_secret.resources[0].data.token | b64decode }}"
+    _quay_auth: "{{ (ocp4_workload_trusted_software_factory_quay_admin_username + ':' + (r_quay_secret.resources[0].data.token | b64decode)) | b64encode }}"
+
+- name: Configure Quay integration via tssc CLI
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      tssc integration quay
+      --url https://{{ _quay_host }}
+      --token {{ _quay_token }}
+      --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
+      --dockerconfigjson '{"auths":{"{{ _quay_host }}":{"auth":"{{ _quay_auth }}"}}}'

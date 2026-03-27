@@ -44,22 +44,22 @@
     validate_certs: false
   register: r_keycloak_token
 
-- name: Get TSSC realm
+- name: Get TSF realm
   ansible.builtin.uri:
-    url: "{{ _keycloak_url }}/admin/realms/tssc"
+    url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}"
     method: GET
     headers:
       Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
     validate_certs: false
     status_code: [200, 404]
-  register: r_tssc_realm
+  register: r_tsf_realm
 
-- name: Create admin user in TSSC realm
-  when: r_tssc_realm.status == 200
+- name: Create admin user in TSF realm
+  when: r_tsf_realm.status == 200
   block:
     - name: Check if admin user exists
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/users?username={{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/users?username={{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
         method: GET
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
@@ -69,7 +69,7 @@
     - name: Create admin user
       when: r_existing_user.json | length == 0
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/users"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/users"
         method: POST
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
@@ -81,7 +81,7 @@
           emailVerified: true
           firstName: "Admin"
           lastName: "User"
-          email: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}@example.com"
+          email: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_email }}"
           credentials:
             - type: password
               value: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_password }}"
@@ -92,56 +92,24 @@
 
     - name: Get admin user ID
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/users?username={{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/users?username={{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
         method: GET
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
         validate_certs: false
       register: r_admin_user
 
-    - name: Get realm admin role
-      ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/roles/admin"
-        method: GET
-        headers:
-          Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
-        validate_certs: false
-      register: r_admin_role
-      failed_when: false
-
-    - name: Assign admin role to user
-      when: r_admin_role.status == 200
-      ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/users/{{ r_admin_user.json[0].id }}/role-mappings/realm"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
-          Content-Type: application/json
-        body_format: json
-        body:
-          - id: "{{ r_admin_role.json.id }}"
-            name: "{{ r_admin_role.json.name }}"
-        validate_certs: false
-        status_code: [204, 409]
-
 - name: Configure OpenShift OAuth client in Keycloak
-  when: r_tssc_realm.status == 200
+  when: r_tsf_realm.status == 200
   block:
-    - name: Get cluster ingress domain
-      kubernetes.core.k8s_info:
-        api_version: config.openshift.io/v1
-        kind: Ingress
-        name: cluster
-      register: r_ingress
-
     - name: Set OAuth redirect URL
       ansible.builtin.set_fact:
-        _oauth_redirect_url: "https://oauth-openshift.{{ r_ingress.resources[0].spec.domain }}/oauth2callback/keycloak"
-        _oauth_web_origin: "https://oauth-openshift.{{ r_ingress.resources[0].spec.domain }}"
+        _oauth_redirect_url: "https://oauth-openshift.{{ openshift_cluster_ingress_domain }}/oauth2callback/keycloak"
+        _oauth_web_origin: "https://oauth-openshift.{{ openshift_cluster_ingress_domain }}"
 
     - name: Check if OpenShift client exists
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/clients?clientId=openshift"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/clients?clientId=openshift"
         method: GET
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
@@ -151,7 +119,7 @@
     - name: Create OpenShift OAuth client
       when: r_existing_client.json | length == 0
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/clients"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/clients"
         method: POST
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
@@ -177,7 +145,7 @@
 
     - name: Get OpenShift client details
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/clients?clientId=openshift"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/clients?clientId=openshift"
         method: GET
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
@@ -186,7 +154,7 @@
 
     - name: Get client secret
       ansible.builtin.uri:
-        url: "{{ _keycloak_url }}/admin/realms/tssc/clients/{{ r_openshift_client.json[0].id }}/client-secret"
+        url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}/clients/{{ r_openshift_client.json[0].id }}/client-secret"
         method: GET
         headers:
           Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
@@ -207,7 +175,7 @@
                 mappingMethod: claim
                 type: OpenID
                 openID:
-                  issuer: "{{ _keycloak_url }}/realms/tssc"
+                  issuer: "{{ _keycloak_url }}/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}"
                   clientID: openshift
                   clientSecret:
                     name: keycloak-client-secret
@@ -231,6 +199,47 @@
           type: Opaque
           stringData:
             clientSecret: "{{ r_client_secret.json.value }}"
+
+- name: Grant cluster-admin to Keycloak admin user
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: keycloak-admin-cluster-admin
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+        - apiGroup: rbac.authorization.k8s.io
+          kind: User
+          name: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+
+- name: Wait for OAuth pods to restart
+  when: r_tsf_realm.status == 200
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: openshift-authentication
+    label_selectors:
+      - app=oauth-openshift
+  register: r_oauth_pods
+  retries: 30
+  delay: 10
+  until:
+    - r_oauth_pods.resources | length > 0
+    - r_oauth_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+
+- name: Remove kubeadmin user
+  when: ocp4_workload_trusted_software_factory_remove_kubeadmin | bool
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Secret
+    name: kubeadmin
+    namespace: kube-system
 
 - name: Save Keycloak admin credentials to user data
   agnosticd.core.agnosticd_user_info:

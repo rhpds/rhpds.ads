@@ -81,8 +81,11 @@ The role uses the `tssc-cli` container image to manage the deployment via Kubern
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ocp4_workload_trusted_software_factory_keycloak_admin_username` | `admin` | Keycloak admin username for TSSC realm |
-| `ocp4_workload_trusted_software_factory_keycloak_admin_password` | `{{ common_password }}` | Keycloak admin password for TSSC realm |
+| `ocp4_workload_trusted_software_factory_keycloak_realm` | `redhat-external` | Keycloak realm name used by TSF |
+| `ocp4_workload_trusted_software_factory_keycloak_admin_username` | `admin` | Keycloak admin username (cluster-admin in OpenShift) |
+| `ocp4_workload_trusted_software_factory_keycloak_admin_password` | `{{ common_password }}` | Keycloak admin password |
+| `ocp4_workload_trusted_software_factory_keycloak_admin_email` | `admin@example.com` | Keycloak admin email address |
+| `ocp4_workload_trusted_software_factory_remove_kubeadmin` | `true` | Remove kubeadmin user after Keycloak authentication is configured |
 
 ## Dependencies
 
@@ -158,29 +161,44 @@ oc get secret keycloak-initial-admin -n tssc-keycloak -o jsonpath='{.data.userna
 oc get secret keycloak-initial-admin -n tssc-keycloak -o jsonpath='{.data.password}' | base64 -d
 ```
 
-**TSSC Realm Admin:**
-The role automatically creates an admin user in the TSSC realm and configures OpenShift OAuth integration. Users can log into OpenShift using Keycloak authentication with the configured admin credentials.
+**TSF Realm Admin:**
+The role automatically creates an admin user in the TSF realm and configures OpenShift OAuth integration. This user is granted:
+- **OpenShift cluster-admin role**: Full administrative access to the OpenShift cluster
+- **Keycloak authentication**: Can log into OpenShift using Keycloak SSO
+
+By default, the kubeadmin user is removed after Keycloak authentication is configured (controlled by `ocp4_workload_trusted_software_factory_remove_kubeadmin`).
 
 ## Architecture
 
-This role:
-1. Creates all TSF resources (namespace, ServiceAccount, ClusterRoleBinding, tssc-cli pod) using separate YAML templates
-2. Waits for the tssc-cli pod to be running
-3. Uses `kubernetes.core.k8s_exec` to run commands in the pod:
-   - `tssc installer --extract` to extract installer files to `/tmp/installer`
-   - Modifies the Konflux channel in `charts/tssc-subscriptions/values.yaml` from `stable-v0` to `stable-v0.1`
-   - `tssc config --create` to create the TSF configuration
-   - Updates the configuration to set cert-manager `manageSubscription: false`
-   - `tssc integration gitlab` to configure GitLab integration
-   - `tssc integration quay` to configure Quay integration
-   - `tssc deploy --values-template /tmp/installer/charts/values.yaml.tpl` to deploy TSF components using customized installer files
-4. Configures Keycloak authentication:
-   - Waits for Keycloak to be ready
-   - Creates an admin user in the TSSC realm
-   - Configures OpenShift OAuth client in Keycloak
-   - Sets up OpenShift to use Keycloak for authentication
-5. Saves access information
-6. Cleans up the tssc-cli pod
+This role is organized into modular task files:
+
+### Task Files
+
+**1. `deploy_tsf.yml`** - TSF Infrastructure Deployment
+- Creates all TSF resources (namespace, ServiceAccount, ClusterRoleBinding, tssc-cli pod) using separate YAML templates
+- Waits for the tssc-cli pod to be running
+- Extracts installer files and customizes Konflux operator channel
+- Creates TSF configuration and updates cert-manager settings
+
+**2. `configure_integrations.yml`** - External Integrations
+- Configures GitLab integration (retrieves route and token, configures via tssc CLI)
+- Configures Quay integration (retrieves route and token, configures via tssc CLI)
+
+**3. `configure_authentication.yml`** - Keycloak and OpenShift OAuth
+- Waits for Keycloak to be ready
+- Creates an admin user in the TSF realm
+- Configures OpenShift OAuth client in Keycloak
+- Sets up OpenShift to use Keycloak for authentication
+- Grants cluster-admin role to the Keycloak admin user
+- Optionally removes kubeadmin user
+
+**4. `workload.yml`** - Main Orchestration
+- Calls `deploy_tsf.yml` to set up TSF infrastructure
+- Calls `configure_integrations.yml` to configure GitLab and Quay
+- Deploys TSF components via `tssc deploy` command
+- Calls `configure_authentication.yml` to set up Keycloak authentication
+- Saves access information to agnosticd_user_data
+- Cleans up the tssc-cli pod
 
 ## Troubleshooting
 

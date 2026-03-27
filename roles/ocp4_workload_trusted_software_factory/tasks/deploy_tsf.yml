@@ -1,0 +1,95 @@
+---
+# Deploy Trusted Software Factory using tssc-cli
+
+- name: Create TSF resources
+  kubernetes.core.k8s:
+    state: present
+    template: "{{ item }}"
+  loop:
+    - namespace.yml.j2
+    - serviceaccount.yml.j2
+    - clusterrolebinding.yml.j2
+    - pod.yml.j2
+
+- name: Wait for TSSC CLI pod to be ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    name: tssc-cli
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+  register: r_tssc_pod
+  retries: 30
+  delay: 2
+  until:
+    - r_tssc_pod.resources | length > 0
+    - r_tssc_pod.resources[0].status.phase is defined
+    - r_tssc_pod.resources[0].status.phase == "Running"
+
+# Extract installer files to customize
+- name: Extract TSF installer files
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: mkdir -p /tmp/installer && tssc installer --extract /tmp/installer
+  register: r_installer_extract
+
+- name: Update Konflux channel in extracted installer files
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      sed -i '/^  konflux:/,/^  [a-z]/{/channel:/s/channel: .*/channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
+      /tmp/installer/charts/tssc-subscriptions/values.yaml
+
+# Create TSF configuration using tssc CLI
+- name: Create TSF configuration via CLI
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: tssc config --create --namespace {{ ocp4_workload_trusted_software_factory_namespace }}
+  register: r_tsf_config_create
+
+# Update cert-manager manageSubscription setting
+- name: Update cert-manager manageSubscription in config
+  when: not ocp4_workload_trusted_software_factory_manage_cert_manager_subscription
+  block:
+    - name: Get current TSF config
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        name: tssc-config
+        namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+      register: r_tsf_config
+
+    - name: Parse current config
+      ansible.builtin.set_fact:
+        _tsf_config: "{{ r_tsf_config.resources[0].data['config.yaml'] | from_yaml }}"
+
+    - name: Find Cert-Manager product index
+      ansible.builtin.set_fact:
+        _cert_manager_index: "{{ _tsf_config.tssc.products | map(attribute='name') | list | index('Cert-Manager') }}"
+
+    - name: Update Cert-Manager manageSubscription
+      ansible.builtin.set_fact:
+        _tsf_config_updated: "{{ _tsf_config | combine({'tssc': {'products': _updated_products}}, recursive=True) }}"
+      vars:
+        _updated_products: >-
+          {{
+            _tsf_config.tssc.products[:_cert_manager_index | int] +
+            [_tsf_config.tssc.products[_cert_manager_index | int] | combine({'properties': {'manageSubscription': false}}, recursive=True)] +
+            _tsf_config.tssc.products[_cert_manager_index | int + 1:]
+          }}
+
+    - name: Update TSF configuration ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: tssc-config
+            namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+            labels:
+              tssc.redhat-appstudio.github.com/config: "true"
+          data:
+            config.yaml: "{{ _tsf_config_updated | to_nice_yaml }}"
