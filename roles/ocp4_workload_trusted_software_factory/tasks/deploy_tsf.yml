@@ -214,7 +214,7 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: sh -c 'nohup tssc deploy --debug --values-template /tssc/charts/values.yaml.tpl > /tmp/tssc-deploy.log 2>&1 &'
+    command: sh -c 'tssc deploy --debug --values-template /tssc/charts/values.yaml.tpl > /tmp/tssc-deploy.log 2>&1 & echo $! > /tmp/tssc-deploy.pid'
 
 - name: Wait for Keycloak to be ready
   kubernetes.core.k8s_info:
@@ -308,7 +308,7 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: sh -c 'while pgrep -f "tssc deploy" > /dev/null; do sleep 10; done; echo "Deploy process completed"'
+    command: sh -c 'PID=$(cat /tmp/tssc-deploy.pid 2>/dev/null); while [ -n "$PID" ] && kill -0 $PID 2>/dev/null; do sleep 10; done; echo "Deploy process completed"'
   register: r_tsf_deploy
   retries: 1
   delay: 0
