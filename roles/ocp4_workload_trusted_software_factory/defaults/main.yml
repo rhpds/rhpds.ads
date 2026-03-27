@@ -36,9 +36,3 @@ ocp4_workload_trusted_software_factory_quay_organization: tsf
 # Note: Uses hardcoded secret name 'quay-admin-token' with field 'token' for Quay admin token
 # Note: Quay host is derived from the route
 
-# Keycloak admin user configuration
-ocp4_workload_trusted_software_factory_keycloak_realm: tsf-iam
-ocp4_workload_trusted_software_factory_keycloak_admin_username: admin
-ocp4_workload_trusted_software_factory_keycloak_admin_password: "{{ common_password }}"
-ocp4_workload_trusted_software_factory_keycloak_admin_email: "admin@example.com"
-ocp4_workload_trusted_software_factory_remove_kubeadmin: true
