@@ -232,6 +232,54 @@
     - r_keycloak.resources[0].status.conditions | selectattr('type', 'equalto', 'Ready') | list | length > 0
     - (r_keycloak.resources[0].status.conditions | selectattr('type', 'equalto', 'Ready') | first).status == "True"
 
+- name: Get Keycloak route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: keycloak
+    namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+  register: r_keycloak_route
+
+- name: Get Keycloak admin credentials
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: keycloak-initial-admin
+    namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+  register: r_keycloak_admin_secret
+
+- name: Set Keycloak admin credentials
+  ansible.builtin.set_fact:
+    _keycloak_admin_user: "{{ r_keycloak_admin_secret.resources[0].data.username | b64decode }}"
+    _keycloak_admin_password: "{{ r_keycloak_admin_secret.resources[0].data.password | b64decode }}"
+    _keycloak_url: "https://{{ r_keycloak_route.resources[0].spec.host }}"
+
+- name: Get Keycloak admin token
+  ansible.builtin.uri:
+    url: "{{ _keycloak_url }}/realms/master/protocol/openid-connect/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: "{{ _keycloak_admin_user }}"
+      password: "{{ _keycloak_admin_password }}"
+      grant_type: password
+      client_id: admin-cli
+    validate_certs: false
+  register: r_keycloak_token
+
+- name: Wait for TSF realm to be available
+  ansible.builtin.uri:
+    url: "{{ _keycloak_url }}/admin/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ r_keycloak_token.json.access_token }}"
+    validate_certs: false
+    status_code: 200
+  register: r_tsf_realm
+  retries: 60
+  delay: 10
+  until: r_tsf_realm.status == 200
+
 - name: Wait for Konflux CR to be created
   kubernetes.core.k8s_info:
     api_version: konflux.konflux-ci.dev/v1alpha1
