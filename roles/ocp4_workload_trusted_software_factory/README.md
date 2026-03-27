@@ -143,13 +143,19 @@ None
 
 After successful deployment, the following information is saved to `agnosticd_user_data`:
 
+### OpenShift Access
+- `openshift_console_url`: OpenShift web console URL
+- `openshift_admin_username`: OpenShift cluster admin username (Keycloak SSO)
+- `openshift_admin_password`: OpenShift cluster admin password
+
+### TSF Components
 - `tsf_keycloak_url`: Keycloak SSO URL
+- `tsf_keycloak_admin_username`: Keycloak admin username for TSF realm
+- `tsf_keycloak_admin_password`: Keycloak admin password
 - `tsf_namespace`: Main TSF namespace
 - `tsf_tas_namespace`: Trusted Artifact Signer namespace
 - `tsf_tpa_namespace`: Trusted Profile Analyzer namespace
 - `tsf_konflux_namespace`: Konflux namespace
-- `tsf_keycloak_admin_username`: Keycloak admin username for TSSC realm
-- `tsf_keycloak_admin_password`: Keycloak admin password for TSSC realm
 
 ### Keycloak Credentials
 

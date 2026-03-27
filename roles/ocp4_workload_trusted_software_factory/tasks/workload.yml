@@ -21,7 +21,12 @@
 - name: Save TSF access information to user data
   agnosticd.core.agnosticd_user_info:
     data:
+      openshift_console_url: "https://console-openshift-console.{{ openshift_cluster_ingress_domain }}"
+      openshift_admin_username: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+      openshift_admin_password: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_password }}"
       tsf_keycloak_url: "https://{{ r_keycloak_route.resources[0].spec.host }}"
+      tsf_keycloak_admin_username: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+      tsf_keycloak_admin_password: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_password }}"
       tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
       tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
       tsf_tpa_namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
