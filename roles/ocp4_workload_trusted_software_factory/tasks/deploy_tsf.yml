@@ -33,14 +33,14 @@
     command: tssc config --create --namespace {{ ocp4_workload_trusted_software_factory_namespace }}
   register: r_tsf_config_create
 
-# Update Konflux channel in extracted installer charts
-- name: Update Konflux channel in installer charts
+# Update Konflux channel in values template
+- name: Update Konflux channel in values template
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
     command: >-
-      sed -i '/^  konflux:/,/^  [a-z]/{/channel:/s/channel: .*/channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
-      /tssc/installer/charts/tssc-subscriptions/values.yaml
+      sed -i '/subscriptions:/,/konflux:/{s/  konflux:/  konflux:\n    channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
+      /tssc/charts/values.yaml.tpl
 
 # Update cert-manager manageSubscription setting
 - name: Update cert-manager manageSubscription in config
@@ -152,12 +152,12 @@
       --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
       --dockerconfigjson '{"auths":{"{{ _quay_host }}":{"auth":"{{ _quay_auth }}"}}}'
 
-# Deploy TSF using embedded installer charts
-- name: Deploy TSF via tssc CLI
+# Deploy TSF using embedded installer charts with modified values template
+- name: Deploy TSF via tssc CLI with values template
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: tssc deploy --debug
+    command: tssc deploy --debug --values-template /tssc/charts/values.yaml.tpl
   register: r_tsf_deploy
 
 - name: Display TSF deployment output
