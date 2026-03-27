@@ -26,17 +26,11 @@
     - r_tssc_pod.resources[0].status.phase == "Running"
 
 # Extract installer files to customize
-- name: Create installer directory
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: mkdir -p /tmp/installer
-
 - name: Extract TSF installer files
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: tssc installer --extract /tmp/installer
+    command: mkdir -p /tmp/installer && tssc installer --extract /tmp/installer
   register: r_installer_extract
 
 - name: Update Konflux channel in extracted installer files
