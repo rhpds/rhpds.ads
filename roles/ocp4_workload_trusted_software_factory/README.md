@@ -188,7 +188,7 @@ This role is organized into modular task files:
 - Configures GitLab integration (retrieves route and token, configures via tssc CLI)
 - Configures Quay integration (retrieves route and token, configures via tssc CLI)
 - Deploys TSF components via `tssc deploy` command
-- Cleans up the tssc-cli pod
+- Leaves tssc-cli pod running for log monitoring (can be manually deleted when no longer needed)
 
 **2. `configure_authentication.yml`** - Keycloak and OpenShift OAuth
 - Waits for Keycloak to be ready
@@ -205,15 +205,22 @@ This role is organized into modular task files:
 
 ## Troubleshooting
 
-### Check tssc-cli pod logs (during deployment)
+### Check tssc-cli pod logs
+
+The tssc-cli pod is left running after deployment for troubleshooting purposes:
 
 ```bash
 oc logs -n tssc tssc-cli
 ```
 
+To delete the pod when no longer needed:
+```bash
+oc delete pod tssc-cli -n tssc
+```
+
 ### Manually run tssc commands
 
-If the pod still exists, you can exec into it:
+You can exec into the pod to run additional tssc commands:
 ```bash
 oc exec -n tssc tssc-cli -- tssc config --get
 oc exec -n tssc tssc-cli -- cat /tmp/installer/charts/tssc-subscriptions/values.yaml | grep -A 5 konflux
