@@ -1,0 +1,69 @@
+---
+# Remove Trusted Software Factory
+
+- name: Delete TSF deployment job
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: tsf-deploy
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+
+- name: Delete TSF configuration
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: ConfigMap
+    name: tssc-config
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+
+- name: Delete Keycloak namespace
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+
+- name: Delete TAS namespace
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
+
+- name: Delete TPA namespace
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
+
+- name: Delete Konflux namespace
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
+
+- name: Delete TSF namespace
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+
+- name: Wait for namespaces to be deleted
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ item }}"
+  register: r_namespace
+  retries: 30
+  delay: 10
+  until: r_namespace.resources | length == 0
+  loop:
+    - "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    - "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+    - "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
+    - "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
+    - "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"

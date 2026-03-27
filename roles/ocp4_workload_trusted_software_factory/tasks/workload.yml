@@ -1,0 +1,197 @@
+---
+# Install Trusted Software Factory using tssc-cli
+
+- name: Create TSF resources
+  kubernetes.core.k8s:
+    state: present
+    template: "{{ item }}"
+  loop:
+    - namespace.yml.j2
+    - serviceaccount.yml.j2
+    - clusterrolebinding.yml.j2
+    - pod.yml.j2
+
+- name: Wait for TSSC CLI pod to be ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    name: tssc-cli
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+  register: r_tssc_pod
+  retries: 30
+  delay: 2
+  until:
+    - r_tssc_pod.resources | length > 0
+    - r_tssc_pod.resources[0].status.phase is defined
+    - r_tssc_pod.resources[0].status.phase == "Running"
+
+# Extract installer files to customize
+- name: Extract TSF installer files
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: tssc installer --extract /tmp/installer
+  register: r_installer_extract
+
+- name: Update Konflux channel in extracted installer files
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      sed -i '/^  konflux:/,/^  [a-z]/{/channel:/s/channel: .*/channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
+      /tmp/installer/charts/tssc-subscriptions/values.yaml
+
+# Create TSF configuration using tssc CLI
+- name: Create TSF configuration via CLI
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: tssc config --create --namespace {{ ocp4_workload_trusted_software_factory_namespace }}
+  register: r_tsf_config_create
+
+# Update cert-manager manageSubscription setting
+- name: Update cert-manager manageSubscription in config
+  when: not ocp4_workload_trusted_software_factory_manage_cert_manager_subscription
+  block:
+    - name: Get current TSF config
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        name: tssc-config
+        namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+      register: r_tsf_config
+
+    - name: Parse current config
+      ansible.builtin.set_fact:
+        _tsf_config: "{{ r_tsf_config.resources[0].data['config.yaml'] | from_yaml }}"
+
+    - name: Find Cert-Manager product index
+      ansible.builtin.set_fact:
+        _cert_manager_index: "{{ _tsf_config.tssc.products | map(attribute='name') | list | index('Cert-Manager') }}"
+
+    - name: Update Cert-Manager manageSubscription
+      ansible.builtin.set_fact:
+        _tsf_config_updated: "{{ _tsf_config | combine({'tssc': {'products': _updated_products}}, recursive=True) }}"
+      vars:
+        _updated_products: >-
+          {{
+            _tsf_config.tssc.products[:_cert_manager_index | int] +
+            [_tsf_config.tssc.products[_cert_manager_index | int] | combine({'properties': {'manageSubscription': false}}, recursive=True)] +
+            _tsf_config.tssc.products[_cert_manager_index | int + 1:]
+          }}
+
+    - name: Update TSF configuration ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: tssc-config
+            namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+            labels:
+              tssc.redhat-appstudio.github.com/config: "true"
+          data:
+            config.yaml: "{{ _tsf_config_updated | to_nice_yaml }}"
+
+# Configure GitLab integration
+- name: Get GitLab route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: gitlab
+    namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
+  register: r_gitlab_route
+
+- name: Get GitLab root token from secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: root-user-personal-token
+    namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
+  register: r_gitlab_secret
+
+- name: Configure GitLab integration via tssc CLI
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      tssc integration gitlab
+      --host {{ r_gitlab_route.resources[0].spec.host }}
+      --port 443
+      --token {{ r_gitlab_secret.resources[0].data.token | b64decode }}
+      --group {{ ocp4_workload_trusted_software_factory_gitlab_group }}
+
+# Configure Quay integration
+- name: Get Quay route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: "{{ ocp4_workload_trusted_software_factory_quay_namespace }}"
+  register: r_quay_routes
+
+- name: Get Quay admin token from secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: quay-admin-token
+    namespace: "{{ ocp4_workload_trusted_software_factory_quay_namespace }}"
+  register: r_quay_secret
+
+- name: Set Quay variables
+  ansible.builtin.set_fact:
+    _quay_host: "{{ r_quay_routes.resources[0].spec.host }}"
+    _quay_token: "{{ r_quay_secret.resources[0].data.token | b64decode }}"
+    _quay_auth: "{{ (ocp4_workload_trusted_software_factory_quay_admin_username + ':' + (r_quay_secret.resources[0].data.token | b64decode)) | b64encode }}"
+
+- name: Configure Quay integration via tssc CLI
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      tssc integration quay
+      --url https://{{ _quay_host }}
+      --token {{ _quay_token }}
+      --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
+      --dockerconfigjson '{"auths":{"{{ _quay_host }}":{"auth":"{{ _quay_auth }}"}}}'
+
+# Deploy TSF using custom installer files
+- name: Deploy TSF via tssc CLI with custom installer
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: tssc deploy --debug --values-template /tmp/installer/charts/values.yaml.tpl
+  register: r_tsf_deploy
+  async: "{{ ocp4_workload_trusted_software_factory_deploy_timeout }}"
+  poll: 10
+
+- name: Display TSF deployment output
+  ansible.builtin.debug:
+    var: r_tsf_deploy.stdout_lines
+
+# Save TSF access information
+- name: Get Keycloak route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: keycloak
+    namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+  register: r_keycloak_route
+
+- name: Save TSF access information to user data
+  agnosticd_user_info:
+    data:
+      tsf_keycloak_url: "https://{{ r_keycloak_route.resources[0].spec.host }}"
+      tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+      tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
+      tsf_tpa_namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
+      tsf_konflux_namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
+
+# Cleanup
+- name: Delete TSSC CLI pod
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: tssc-cli
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"

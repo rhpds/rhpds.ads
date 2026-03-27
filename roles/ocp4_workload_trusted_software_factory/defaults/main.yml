@@ -1,0 +1,43 @@
+---
+# TSF Namespace
+ocp4_workload_trusted_software_factory_namespace: tssc
+
+# TSSC CLI container image
+ocp4_workload_trusted_software_factory_cli_image: quay.io/roming22-org/tsf
+ocp4_workload_trusted_software_factory_cli_tag: latest
+
+# Cert-manager configuration
+# Note: cert-manager is typically already installed in AgnosticV environments
+# Set manage_cert_manager_subscription to false so TSF doesn't try to install the operator
+ocp4_workload_trusted_software_factory_manage_cert_manager_subscription: false
+
+# Operator channels (override if needed)
+ocp4_workload_trusted_software_factory_konflux_channel: stable-v0.1
+
+# TAS namespace
+ocp4_workload_trusted_software_factory_tas_namespace: tssc-tas
+
+# Konflux namespace
+ocp4_workload_trusted_software_factory_konflux_namespace: konflux-ui
+
+# TPA namespace
+ocp4_workload_trusted_software_factory_tpa_namespace: tssc-tpa
+
+# Keycloak namespace
+ocp4_workload_trusted_software_factory_keycloak_namespace: tssc-keycloak
+
+# GitLab integration
+ocp4_workload_trusted_software_factory_gitlab_namespace: gitlab
+ocp4_workload_trusted_software_factory_gitlab_group: tsf
+# Note: Uses hardcoded secret name 'root-user-personal-token' with field 'token' for GitLab root token
+# Note: GitLab host and port are derived from the route
+
+# Quay integration
+ocp4_workload_trusted_software_factory_quay_namespace: quay-registry
+ocp4_workload_trusted_software_factory_quay_admin_username: quayadmin
+ocp4_workload_trusted_software_factory_quay_organization: quayadmin
+# Note: Uses hardcoded secret name 'quay-admin-token' with field 'token' for Quay admin token
+# Note: Quay host is derived from the route
+
+# Deployment timeout
+ocp4_workload_trusted_software_factory_deploy_timeout: 900
