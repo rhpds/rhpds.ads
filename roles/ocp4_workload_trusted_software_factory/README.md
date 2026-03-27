@@ -174,17 +174,16 @@ This role is organized into modular task files:
 
 ### Task Files
 
-**1. `deploy_tsf.yml`** - TSF Infrastructure Deployment
+**1. `deploy_tsf.yml`** - TSF Deployment and Integrations
 - Creates all TSF resources (namespace, ServiceAccount, ClusterRoleBinding, tssc-cli pod) using separate YAML templates
 - Waits for the tssc-cli pod to be running
 - Extracts installer files and customizes Konflux operator channel
 - Creates TSF configuration and updates cert-manager settings
-
-**2. `configure_integrations.yml`** - External Integrations
 - Configures GitLab integration (retrieves route and token, configures via tssc CLI)
 - Configures Quay integration (retrieves route and token, configures via tssc CLI)
+- Deploys TSF components via `tssc deploy` command
 
-**3. `configure_authentication.yml`** - Keycloak and OpenShift OAuth
+**2. `configure_authentication.yml`** - Keycloak and OpenShift OAuth
 - Waits for Keycloak to be ready
 - Creates an admin user in the TSF realm
 - Configures OpenShift OAuth client in Keycloak
@@ -192,10 +191,8 @@ This role is organized into modular task files:
 - Grants cluster-admin role to the Keycloak admin user
 - Optionally removes kubeadmin user
 
-**4. `workload.yml`** - Main Orchestration
-- Calls `deploy_tsf.yml` to set up TSF infrastructure
-- Calls `configure_integrations.yml` to configure GitLab and Quay
-- Deploys TSF components via `tssc deploy` command
+**3. `workload.yml`** - Main Orchestration
+- Calls `deploy_tsf.yml` to deploy TSF and integrations
 - Calls `configure_authentication.yml` to set up Keycloak authentication
 - Saves access information to agnosticd_user_data
 - Cleans up the tssc-cli pod

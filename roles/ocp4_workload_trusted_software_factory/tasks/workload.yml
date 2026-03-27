@@ -1,27 +1,9 @@
 ---
 # Install Trusted Software Factory using tssc-cli
 
-# Deploy TSF infrastructure
-- name: Deploy TSF infrastructure
+# Deploy TSF with integrations
+- name: Deploy TSF and integrations
   ansible.builtin.include_tasks: deploy_tsf.yml
-
-# Configure GitLab and Quay integrations
-- name: Configure integrations
-  ansible.builtin.include_tasks: configure_integrations.yml
-
-# Deploy TSF using custom installer files
-- name: Deploy TSF via tssc CLI with custom installer
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: tssc deploy --debug --values-template /tmp/installer/charts/values.yaml.tpl
-  register: r_tsf_deploy
-  async: "{{ ocp4_workload_trusted_software_factory_deploy_timeout }}"
-  poll: 10
-
-- name: Display TSF deployment output
-  ansible.builtin.debug:
-    var: r_tsf_deploy.stdout_lines
 
 # Configure Keycloak and OpenShift authentication
 - name: Configure Keycloak authentication
