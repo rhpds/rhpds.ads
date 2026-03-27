@@ -14,6 +14,10 @@ ocp4_workload_trusted_software_factory_manage_cert_manager_subscription: false
 # Operator channels (override if needed)
 ocp4_workload_trusted_software_factory_konflux_channel: stable-v0.1
 
+# Konflux image-controller configuration
+# Note: image-controller has issues with local Quay instances, disable by default
+ocp4_workload_trusted_software_factory_konflux_image_controller_enabled: false
+
 # TAS namespace
 ocp4_workload_trusted_software_factory_tas_namespace: tssc-tas
 
