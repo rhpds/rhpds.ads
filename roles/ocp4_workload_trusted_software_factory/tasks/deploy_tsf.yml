@@ -68,20 +68,16 @@
       ansible.builtin.set_fact:
         _tsf_config: "{{ r_tsf_config.resources[0].data['config.yaml'] | from_yaml }}"
 
+    - name: Build updated products list
+      ansible.builtin.set_fact:
+        _updated_products: "{{ _updated_products | default([]) + [_product] }}"
+      vars:
+        _product: "{{ item | combine({'properties': {'manageSubscription': false}}, recursive=True) if item.name == 'Cert-Manager' else item }}"
+      loop: "{{ _tsf_config.tssc.products }}"
+
     - name: Update Cert-Manager manageSubscription
       ansible.builtin.set_fact:
         _tsf_config_updated: "{{ _tsf_config | combine({'tssc': {'products': _updated_products}}, recursive=True) }}"
-      vars:
-        _updated_products: |
-          {% set products = [] %}
-          {% for product in _tsf_config.tssc.products %}
-            {% if product.name == 'Cert-Manager' %}
-              {% set _ = products.append(product | combine({'properties': {'manageSubscription': false}}, recursive=True)) %}
-            {% else %}
-              {% set _ = products.append(product) %}
-            {% endif %}
-          {% endfor %}
-          {{ products | to_json | from_json }}
 
     - name: Update TSF configuration ConfigMap
       kubernetes.core.k8s:
