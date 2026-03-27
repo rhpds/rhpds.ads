@@ -1,9 +1,9 @@
 ---
 # TSF Namespace
-ocp4_workload_trusted_software_factory_namespace: tssc
+ocp4_workload_trusted_software_factory_namespace: tsf
 
-# TSSC CLI container image
-ocp4_workload_trusted_software_factory_cli_image: quay.io/roming22-org/tsf
+# TSF CLI container image
+ocp4_workload_trusted_software_factory_cli_image: quay.io/redhat-appstudio/tsf-cli
 ocp4_workload_trusted_software_factory_cli_tag: latest
 
 # Cert-manager configuration
@@ -11,24 +11,21 @@ ocp4_workload_trusted_software_factory_cli_tag: latest
 # Set manage_cert_manager_subscription to false so TSF doesn't try to install the operator
 ocp4_workload_trusted_software_factory_manage_cert_manager_subscription: false
 
-# Operator channels (override if needed)
-ocp4_workload_trusted_software_factory_konflux_channel: stable-v0.1
-
 # Konflux image-controller configuration
 # Note: image-controller has issues with local Quay instances, disable by default
 ocp4_workload_trusted_software_factory_konflux_image_controller_enabled: false
 
 # TAS namespace
-ocp4_workload_trusted_software_factory_tas_namespace: tssc-tas
+ocp4_workload_trusted_software_factory_tas_namespace: tsf-tas
 
 # Konflux namespace
 ocp4_workload_trusted_software_factory_konflux_namespace: konflux-ui
 
 # TPA namespace
-ocp4_workload_trusted_software_factory_tpa_namespace: tssc-tpa
+ocp4_workload_trusted_software_factory_tpa_namespace: tsf-tpa
 
 # Keycloak namespace
-ocp4_workload_trusted_software_factory_keycloak_namespace: tssc-keycloak
+ocp4_workload_trusted_software_factory_keycloak_namespace: tsf-keycloak
 
 # GitLab integration
 ocp4_workload_trusted_software_factory_gitlab_namespace: gitlab
@@ -44,7 +41,7 @@ ocp4_workload_trusted_software_factory_quay_organization: quayadmin
 # Note: Quay host is derived from the route
 
 # Keycloak admin user configuration
-ocp4_workload_trusted_software_factory_keycloak_realm: tssc-iam
+ocp4_workload_trusted_software_factory_keycloak_realm: tsf-iam
 ocp4_workload_trusted_software_factory_keycloak_admin_username: admin
 ocp4_workload_trusted_software_factory_keycloak_admin_password: "{{ common_password }}"
 ocp4_workload_trusted_software_factory_keycloak_admin_email: "admin@example.com"

@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: tssc-cli
+  name: tsf-cli
   namespace: {{ ocp4_workload_trusted_software_factory_namespace }}
   labels:
-    app: tssc-cli
+    app: tsf-cli
 spec:
   serviceAccountName: tsf-deployer
   restartPolicy: Never
   containers:
-  - name: tssc
+  - name: tsf
     image: {{ ocp4_workload_trusted_software_factory_cli_image }}:{{ ocp4_workload_trusted_software_factory_cli_tag }}
     command:
     - /bin/sh
@@ -20,8 +20,8 @@ spec:
       TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
       CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 
-      mkdir -p /tssc/.kube
-      cat > /tssc/.kube/config <<EOF
+      mkdir -p /tsf/.kube
+      cat > /tsf/.kube/config <<EOF
       apiVersion: v1
       kind: Config
       clusters:
@@ -42,5 +42,5 @@ spec:
       EOF
 
       # Keep pod running
-      echo "TSSC CLI pod ready"
+      echo "TSF CLI pod ready"
       tail -f /dev/null

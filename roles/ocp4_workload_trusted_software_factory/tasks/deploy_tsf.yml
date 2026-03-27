@@ -1,5 +1,5 @@
 ---
-# Deploy Trusted Software Factory using tssc-cli
+# Deploy Trusted Software Factory using tsf CLI
 
 - name: Create TSF resources
   kubernetes.core.k8s:
@@ -11,36 +11,27 @@
     - clusterrolebinding.yml.j2
     - pod.yml.j2
 
-- name: Wait for TSSC CLI pod to be ready
+- name: Wait for TSF CLI pod to be ready
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Pod
-    name: tssc-cli
+    name: tsf-cli
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-  register: r_tssc_pod
+  register: r_tsf_pod
   retries: 30
   delay: 2
   until:
-    - r_tssc_pod.resources | length > 0
-    - r_tssc_pod.resources[0].status.phase is defined
-    - r_tssc_pod.resources[0].status.phase == "Running"
+    - r_tsf_pod.resources | length > 0
+    - r_tsf_pod.resources[0].status.phase is defined
+    - r_tsf_pod.resources[0].status.phase == "Running"
 
-# Create TSF configuration using tssc CLI
+# Create TSF configuration using tsf CLI
 - name: Create TSF configuration via CLI
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: tssc config --create --namespace {{ ocp4_workload_trusted_software_factory_namespace }}
+    pod: tsf-cli
+    command: tsf config --create --force
   register: r_tsf_config_create
-
-# Update Konflux channel in values template
-- name: Update Konflux channel in values template
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: >-
-      sed -i '/subscriptions:/,/konflux:/{s/  konflux:/  konflux:\n    channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
-      /tssc/charts/values.yaml.tpl
 
 # Update cert-manager manageSubscription setting
 - name: Update cert-manager manageSubscription in config
@@ -50,7 +41,7 @@
       kubernetes.core.k8s_info:
         api_version: v1
         kind: ConfigMap
-        name: tssc-config
+        name: tsf-config
         namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
       register: r_tsf_config
 
@@ -63,16 +54,16 @@
         _updated_products: "{{ _updated_products | default([]) + [_product] }}"
       vars:
         _product: "{{ item | combine({'properties': {'manageSubscription': false}}, recursive=True) if item.name == 'Cert-Manager' else item }}"
-      loop: "{{ _tsf_config.tssc.products }}"
+      loop: "{{ _tsf_config.tsf.products }}"
 
     - name: Update Cert-Manager manageSubscription
       ansible.builtin.set_fact:
-        _tsf_config_updated: "{{ _tsf_config | combine({'tssc': {'products': _updated_products}}, recursive=True) }}"
+        _tsf_config_updated: "{{ _tsf_config | combine({'tsf': {'products': _updated_products}}, recursive=True) }}"
 
     - name: Update TSF configuration ConfigMap
       kubernetes.core.k8s:
         state: present
-        template: tssc-config.yml.j2
+        template: tsf-config.yml.j2
 
 # Configure GitLab integration
 - name: Wait for GitLab initialization job to complete
@@ -107,12 +98,12 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
   register: r_gitlab_secret
 
-- name: Configure GitLab integration via tssc CLI
+- name: Configure GitLab integration via tsf CLI
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
+    pod: tsf-cli
     command: >-
-      tssc integration gitlab
+      tsf integration gitlab
       --host {{ r_gitlab_route.resources[0].spec.host }}
       --port 443
       --token {{ r_gitlab_secret.resources[0].data.token | b64decode }}
@@ -167,23 +158,24 @@
     status_code: [200, 201]
   register: r_quay_org_create
 
-- name: Configure Quay integration via tssc CLI
+- name: Configure Quay integration via tsf CLI
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
+    pod: tsf-cli
     command: >-
-      tssc integration quay
+      tsf integration quay
       --url https://{{ _quay_host }}
       --token {{ _quay_token }}
       --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
       --dockerconfigjson '{"auths":{"{{ _quay_host }}":{"auth":"{{ _quay_auth }}"}}}'
+      --force
 
-# Deploy TSF using embedded installer charts with modified values template
+# Deploy TSF using embedded installer charts
 - name: Start TSF deployment in background
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: sh -c 'tssc deploy --debug --values-template /tssc/charts/values.yaml.tpl > /tmp/tssc-deploy.log 2>&1 & echo $! > /tmp/tssc-deploy.pid'
+    pod: tsf-cli
+    command: sh -c 'tsf deploy > /tmp/tsf-deploy.log 2>&1 & echo $! > /tmp/tsf-deploy.pid'
 
 - name: Wait for Konflux CR to be created
   kubernetes.core.k8s_info:
@@ -212,8 +204,8 @@
 - name: Wait for TSF deployment to complete
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: sh -c 'PID=$(cat /tmp/tssc-deploy.pid 2>/dev/null); while [ -n "$PID" ] && kill -0 $PID 2>/dev/null; do sleep 10; done; echo "Deploy process completed"'
+    pod: tsf-cli
+    command: sh -c 'PID=$(cat /tmp/tsf-deploy.pid 2>/dev/null); while [ -n "$PID" ] && kill -0 $PID 2>/dev/null; do sleep 10; done; echo "Deploy process completed"'
   register: r_tsf_deploy
   retries: 1
   delay: 0
@@ -222,8 +214,8 @@
 - name: Display TSF deployment log
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: tail -100 /tmp/tssc-deploy.log
+    pod: tsf-cli
+    command: tail -100 /tmp/tsf-deploy.log
   register: r_tsf_deploy_log
 
 - name: Show deployment output
