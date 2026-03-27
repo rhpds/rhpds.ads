@@ -42,6 +42,7 @@
       sed -i '/subscriptions:/,/konflux:/{s/  konflux:/  konflux:\n    channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
       /tssc/charts/values.yaml.tpl
 
+
 # Update cert-manager manageSubscription setting
 - name: Update cert-manager manageSubscription in config
   when: not ocp4_workload_trusted_software_factory_manage_cert_manager_subscription
@@ -189,3 +190,17 @@
 - name: Display TSF deployment output
   ansible.builtin.debug:
     var: r_tsf_deploy.stdout_lines
+
+- name: Disable image-controller in Konflux CR to prevent issues
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: konflux.konflux-ci.dev/v1alpha1
+      kind: Konflux
+      metadata:
+        name: konflux
+        namespace: konflux-ui
+      spec:
+        imageController:
+          enabled: false
+  ignore_errors: true
