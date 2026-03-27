@@ -81,7 +81,7 @@ The role uses the `tssc-cli` container image to manage the deployment via Kubern
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ocp4_workload_trusted_software_factory_keycloak_realm` | `redhat-external` | Keycloak realm name used by TSF |
+| `ocp4_workload_trusted_software_factory_keycloak_realm` | `tssc-iam` | Keycloak realm name used by TSF |
 | `ocp4_workload_trusted_software_factory_keycloak_admin_username` | `admin` | Keycloak admin username (cluster-admin in OpenShift) |
 | `ocp4_workload_trusted_software_factory_keycloak_admin_password` | `{{ common_password }}` | Keycloak admin password |
 | `ocp4_workload_trusted_software_factory_keycloak_admin_email` | `admin@example.com` | Keycloak admin email address |

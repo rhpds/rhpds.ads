@@ -43,7 +43,7 @@ ocp4_workload_trusted_software_factory_quay_organization: quayadmin
 ocp4_workload_trusted_software_factory_deploy_timeout: 900
 
 # Keycloak admin user configuration
-ocp4_workload_trusted_software_factory_keycloak_realm: redhat-external
+ocp4_workload_trusted_software_factory_keycloak_realm: tssc-iam
 ocp4_workload_trusted_software_factory_keycloak_admin_username: admin
 ocp4_workload_trusted_software_factory_keycloak_admin_password: "{{ common_password }}"
 ocp4_workload_trusted_software_factory_keycloak_admin_email: "admin@example.com"
