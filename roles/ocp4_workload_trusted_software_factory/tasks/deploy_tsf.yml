@@ -50,6 +50,14 @@
       sed -i '/^konflux:/a\  imageController:\n    enabled: {{ ocp4_workload_trusted_software_factory_konflux_image_controller_enabled | lower }}'
       /tssc/charts/values.yaml.tpl
 
+- name: Fix hard-coded imageController in Konflux template
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: >-
+      sed -i '/imageController:/,/enabled:/ s/enabled: true/enabled: {{ .Values.konflux.imageController.enabled }}/'
+      /tssc/charts/tssc-konflux/templates/konflux.yaml
+
 # Update cert-manager manageSubscription setting
 - name: Update cert-manager manageSubscription in config
   when: not ocp4_workload_trusted_software_factory_manage_cert_manager_subscription
