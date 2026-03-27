@@ -141,6 +141,32 @@
     _quay_token: "{{ r_quay_secret.resources[0].data.token | b64decode }}"
     _quay_auth: "{{ (ocp4_workload_trusted_software_factory_quay_admin_username + ':' + (r_quay_secret.resources[0].data.token | b64decode)) | b64encode }}"
 
+- name: Check if Quay organization exists
+  ansible.builtin.uri:
+    url: "https://{{ _quay_host }}/api/v1/organization/{{ ocp4_workload_trusted_software_factory_quay_organization }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ _quay_token }}"
+    validate_certs: false
+    status_code: [200, 404]
+  register: r_quay_org_check
+
+- name: Create Quay organization
+  when: r_quay_org_check.status == 404
+  ansible.builtin.uri:
+    url: "https://{{ _quay_host }}/api/v1/organization/"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _quay_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name: "{{ ocp4_workload_trusted_software_factory_quay_organization }}"
+      email: "{{ ocp4_workload_trusted_software_factory_quay_organization }}@example.com"
+    validate_certs: false
+    status_code: [200, 201]
+  register: r_quay_org_create
+
 - name: Configure Quay integration via tssc CLI
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
