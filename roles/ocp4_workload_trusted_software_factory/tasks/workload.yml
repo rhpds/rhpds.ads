@@ -5,11 +5,28 @@
 - name: Deploy TSF and integrations
   ansible.builtin.include_tasks: deploy_tsf.yml
 
-# Configure Keycloak and OpenShift authentication
-- name: Configure Keycloak authentication
-  ansible.builtin.include_tasks: configure_authentication.yml
-
 # Save TSF access information
+- name: Get Konflux UI route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
+  register: r_konflux_routes
+
+- name: Get all TAS routes
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
+  register: r_tas_routes
+
+- name: Get TPA route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
+  register: r_tpa_routes
+
 - name: Get Keycloak route
   kubernetes.core.k8s_info:
     api_version: route.openshift.io/v1
@@ -18,15 +35,60 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
   register: r_keycloak_route
 
+- name: Get Keycloak admin credentials
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: keycloak-initial-admin
+    namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+  register: r_keycloak_admin_secret
+
+- name: Get TSF realm admin user from realm import secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: keycloak-tsf-iam-realm
+    namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+  register: r_tsf_realm_secret
+
+- name: Extract admin user credentials from realm
+  when: r_tsf_realm_secret.resources | length > 0
+  ansible.builtin.set_fact:
+    _tsf_realm_json: "{{ r_tsf_realm_secret.resources[0].data['tsf-iam-realm.json'] | b64decode | from_json }}"
+
+- name: Get admin user from realm
+  when: r_tsf_realm_secret.resources | length > 0
+  ansible.builtin.set_fact:
+    _tsf_admin_user: "{{ _tsf_realm_json.users | selectattr('username', 'equalto', 'admin') | first }}"
+
+- name: Build TAS routes dictionary
+  ansible.builtin.set_fact:
+    _tas_routes_dict: "{{ _tas_routes_dict | default({}) | combine({item.metadata.name: 'https://' + item.spec.host}) }}"
+  loop: "{{ r_tas_routes.resources }}"
+  when: r_tas_routes.resources | length > 0
+
 - name: Save TSF access information to user data
   agnosticd.core.agnosticd_user_info:
     data:
-      openshift_console_url: "https://console-openshift-console.{{ openshift_cluster_ingress_domain }}"
-      openshift_admin_username: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
-      openshift_admin_password: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_password }}"
-      tsf_keycloak_url: "https://{{ r_keycloak_route.resources[0].spec.host }}"
-      tsf_keycloak_admin_username: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
-      tsf_keycloak_admin_password: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_password }}"
+      # Keycloak
+      keycloak_url: "{{ 'https://' + r_keycloak_route.resources[0].spec.host if r_keycloak_route.resources | length > 0 else 'Not available' }}"
+      keycloak_admin_username: "{{ r_keycloak_admin_secret.resources[0].data.username | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
+      keycloak_admin_password: "{{ r_keycloak_admin_secret.resources[0].data.password | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
+      tsf_realm_admin_username: "{{ _tsf_admin_user.username | default('Not available') }}"
+      tsf_realm_admin_password: "{{ _tsf_admin_user.credentials[0].value | default('Not available') }}"
+
+      # Konflux UI
+      konflux_ui_url: "{{ 'https://' + r_konflux_routes.resources[0].spec.host if r_konflux_routes.resources | length > 0 else 'Not available' }}"
+
+      # TAS (Trusted Artifact Signer)
+      tas_routes: "{{ _tas_routes_dict | default({}) }}"
+
+      # TPA (Trusted Profile Analyzer)
+      tpa_url: "{{ 'https://' + r_tpa_routes.resources[0].spec.host if r_tpa_routes.resources | length > 0 else 'Not available' }}"
+      tpa_username: "{{ _tsf_admin_user.username | default('Not available') }}"
+      tpa_password: "{{ _tsf_admin_user.credentials[0].value | default('Not available') }}"
+
+      # Namespaces
       tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
       tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
       tsf_tpa_namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
