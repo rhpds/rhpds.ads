@@ -157,7 +157,7 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: tssc deploy --debug --values-template /tssc/charts/values.yaml.tpl
+    command: sh -c 'tssc deploy --debug --values-template /tssc/charts/values.yaml.tpl 2>&1 | tee /tmp/tssc-deploy.log'
   register: r_tsf_deploy
 
 - name: Display TSF deployment output
