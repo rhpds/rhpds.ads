@@ -171,53 +171,13 @@
       --force
 
 # Deploy TSF using embedded installer charts
-- name: Start TSF deployment in background
+- name: Deploy TSF via tsf CLI
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tsf-cli
-    command: sh -c 'tsf deploy > /tmp/tsf-deploy.log 2>&1 & echo $! > /tmp/tsf-deploy.pid'
-
-- name: Wait for Konflux CR to be created
-  kubernetes.core.k8s_info:
-    api_version: konflux.konflux-ci.dev/v1alpha1
-    kind: Konflux
-    name: konflux
-    namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
-  register: r_konflux_cr
-  retries: 120
-  delay: 5
-  until:
-    - r_konflux_cr.resources | length > 0
-
-- name: Patch Konflux CR to disable image-controller
-  when: not ocp4_workload_trusted_software_factory_konflux_image_controller_enabled
-  kubernetes.core.k8s:
-    api_version: konflux.konflux-ci.dev/v1alpha1
-    kind: Konflux
-    name: konflux
-    namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
-    definition:
-      spec:
-        imageController:
-          enabled: false
-
-- name: Wait for TSF deployment to complete
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tsf-cli
-    command: sh -c 'PID=$(cat /tmp/tsf-deploy.pid 2>/dev/null); while [ -n "$PID" ] && kill -0 $PID 2>/dev/null; do sleep 10; done; echo "Deploy process completed"'
+    command: sh -c 'tsf deploy 2>&1 | tee /tmp/tsf-deploy.log'
   register: r_tsf_deploy
-  retries: 1
-  delay: 0
-  failed_when: false
 
-- name: Display TSF deployment log
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tsf-cli
-    command: tail -100 /tmp/tsf-deploy.log
-  register: r_tsf_deploy_log
-
-- name: Show deployment output
+- name: Display TSF deployment output
   ansible.builtin.debug:
-    var: r_tsf_deploy_log.stdout_lines
+    var: r_tsf_deploy.stdout_lines

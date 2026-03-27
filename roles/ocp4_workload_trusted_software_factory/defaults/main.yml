@@ -11,10 +11,6 @@ ocp4_workload_trusted_software_factory_cli_tag: latest
 # Set manage_cert_manager_subscription to false so TSF doesn't try to install the operator
 ocp4_workload_trusted_software_factory_manage_cert_manager_subscription: false
 
-# Konflux image-controller configuration
-# Note: image-controller has issues with local Quay instances, disable by default
-ocp4_workload_trusted_software_factory_konflux_image_controller_enabled: false
-
 # TAS namespace
 ocp4_workload_trusted_software_factory_tas_namespace: tsf-tas
 
