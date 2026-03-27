@@ -1,0 +1,10 @@
+---
+- name: Deploy Trusted Software Factory
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ACTION: provision
+    common_password: "openshift"
+  roles:
+  - role: ocp4_workload_trusted_software_factory

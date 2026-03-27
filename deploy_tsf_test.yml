@@ -1,0 +1,56 @@
+---
+- name: Deploy Trusted Software Factory (Test)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    openshift_cluster_ingress_domain: "apps.cluster-9h995.dynamic.redhatworkshops.io"
+    ocp4_workload_trusted_software_factory_namespace: tsf
+    ocp4_workload_trusted_software_factory_cli_image: quay.io/redhat-ads/tsf-cli
+    ocp4_workload_trusted_software_factory_cli_tag: latest
+    ocp4_workload_trusted_software_factory_manage_cert_manager_subscription: false
+    ocp4_workload_trusted_software_factory_tas_namespace: tsf-tas
+    ocp4_workload_trusted_software_factory_konflux_namespace: konflux-ui
+    ocp4_workload_trusted_software_factory_tpa_namespace: tsf-tpa
+    ocp4_workload_trusted_software_factory_keycloak_namespace: tsf-keycloak
+    ocp4_workload_trusted_software_factory_gitlab_namespace: gitlab
+    ocp4_workload_trusted_software_factory_gitlab_group: tsf
+    ocp4_workload_trusted_software_factory_quay_namespace: quay-enterprise
+    ocp4_workload_trusted_software_factory_quay_admin_username: quayadmin
+    ocp4_workload_trusted_software_factory_quay_organization: tsf
+    ocp4_workload_trusted_software_factory_keycloak_realm: tsf-iam
+    ocp4_workload_trusted_software_factory_keycloak_admin_username: admin
+    ocp4_workload_trusted_software_factory_keycloak_admin_password: oNhdKoghXyw5
+    ocp4_workload_trusted_software_factory_keycloak_admin_email: "admin@demo.redhat.com"
+    ocp4_workload_trusted_software_factory_remove_kubeadmin: true
+  tasks:
+  - name: Deploy TSF and integrations
+    ansible.builtin.include_role:
+      name: ocp4_workload_trusted_software_factory
+      tasks_from: deploy_tsf.yml
+
+  - name: Configure Keycloak authentication
+    ansible.builtin.include_role:
+      name: ocp4_workload_trusted_software_factory
+      tasks_from: configure_authentication.yml
+
+  - name: Get Keycloak route
+    kubernetes.core.k8s_info:
+      api_version: route.openshift.io/v1
+      kind: Route
+      name: keycloak
+      namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
+    register: r_keycloak_route
+
+  - name: Display TSF access information
+    ansible.builtin.debug:
+      msg:
+      - "TSF Deployment Complete!"
+      - "OpenShift Console: https://console-openshift-console.{{ openshift_cluster_ingress_domain }}"
+      - "Admin Username: {{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+      - "Admin Password: {{ ocp4_workload_trusted_software_factory_keycloak_admin_password }}"
+      - "Keycloak URL: https://{{ r_keycloak_route.resources[0].spec.host }}"
+      - "TSF Namespace: {{ ocp4_workload_trusted_software_factory_namespace }}"
+      - "TAS Namespace: {{ ocp4_workload_trusted_software_factory_tas_namespace }}"
+      - "TPA Namespace: {{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
+      - "Konflux Namespace: {{ ocp4_workload_trusted_software_factory_konflux_namespace }}"

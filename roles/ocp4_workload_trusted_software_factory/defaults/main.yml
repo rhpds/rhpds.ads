@@ -3,7 +3,7 @@
 ocp4_workload_trusted_software_factory_namespace: tsf
 
 # TSF CLI container image
-ocp4_workload_trusted_software_factory_cli_image: quay.io/redhat-appstudio/tsf-cli
+ocp4_workload_trusted_software_factory_cli_image: quay.io/redhat-ads/tsf-cli:latest
 ocp4_workload_trusted_software_factory_cli_tag: latest
 
 # Cert-manager configuration
