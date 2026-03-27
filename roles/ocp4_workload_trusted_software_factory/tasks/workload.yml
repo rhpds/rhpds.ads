@@ -179,7 +179,7 @@
   register: r_keycloak_route
 
 - name: Save TSF access information to user data
-  agnosticd_user_info:
+  agnosticd.core.agnosticd_user_info:
     data:
       tsf_keycloak_url: "https://{{ r_keycloak_route.resources[0].spec.host }}"
       tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
