@@ -26,6 +26,12 @@
     - r_tssc_pod.resources[0].status.phase == "Running"
 
 # Extract installer files to customize
+- name: Create installer directory
+  kubernetes.core.k8s_exec:
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
+    pod: tssc-cli
+    command: mkdir -p /tmp/installer
+
 - name: Extract TSF installer files
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
