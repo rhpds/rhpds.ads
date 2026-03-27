@@ -93,9 +93,8 @@
   kubernetes.core.k8s_info:
     api_version: batch/v1
     kind: Job
+    name: initialize-gitlab
     namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
-    label_selectors:
-      - job-name=initialize-gitlab
   register: r_gitlab_init_job
   retries: 80
   delay: 15
