@@ -188,6 +188,7 @@ This role is organized into modular task files:
 - Configures GitLab integration (retrieves route and token, configures via tssc CLI)
 - Configures Quay integration (retrieves route and token, configures via tssc CLI)
 - Deploys TSF components via `tssc deploy` command
+- Cleans up the tssc-cli pod
 
 **2. `configure_authentication.yml`** - Keycloak and OpenShift OAuth
 - Waits for Keycloak to be ready
@@ -200,8 +201,7 @@ This role is organized into modular task files:
 **3. `workload.yml`** - Main Orchestration
 - Calls `deploy_tsf.yml` to deploy TSF and integrations
 - Calls `configure_authentication.yml` to set up Keycloak authentication
-- Saves access information to agnosticd_user_data
-- Cleans up the tssc-cli pod
+- Saves access information to agnosticd_user_data (OpenShift console, admin credentials, TSF URLs)
 
 ## Troubleshooting
 

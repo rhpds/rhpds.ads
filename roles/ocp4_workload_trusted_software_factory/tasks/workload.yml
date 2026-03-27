@@ -31,12 +31,3 @@
       tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
       tsf_tpa_namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
       tsf_konflux_namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
-
-# Cleanup
-- name: Delete TSSC CLI pod
-  kubernetes.core.k8s:
-    state: absent
-    api_version: v1
-    kind: Pod
-    name: tssc-cli
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"

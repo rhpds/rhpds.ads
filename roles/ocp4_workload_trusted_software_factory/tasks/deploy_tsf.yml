@@ -160,3 +160,12 @@
 - name: Display TSF deployment output
   ansible.builtin.debug:
     var: r_tsf_deploy.stdout_lines
+
+# Cleanup
+- name: Delete TSSC CLI pod
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: tssc-cli
+    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
