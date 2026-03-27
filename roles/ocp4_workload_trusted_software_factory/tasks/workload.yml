@@ -170,6 +170,10 @@
   ansible.builtin.debug:
     var: r_tsf_deploy.stdout_lines
 
+# Configure Keycloak and OpenShift authentication
+- name: Configure Keycloak authentication
+  ansible.builtin.include_tasks: configure_authentication.yml
+
 # Save TSF access information
 - name: Get Keycloak route
   kubernetes.core.k8s_info:

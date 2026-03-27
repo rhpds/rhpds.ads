@@ -77,6 +77,13 @@ The role uses the `tssc-cli` container image to manage the deployment via Kubern
 |----------|---------|-------------|
 | `ocp4_workload_trusted_software_factory_deploy_timeout` | `900` | Deployment timeout in seconds |
 
+### Keycloak Admin User Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ocp4_workload_trusted_software_factory_keycloak_admin_username` | `admin` | Keycloak admin username for TSSC realm |
+| `ocp4_workload_trusted_software_factory_keycloak_admin_password` | `{{ common_password }}` | Keycloak admin password for TSSC realm |
+
 ## Dependencies
 
 None
@@ -138,15 +145,21 @@ After successful deployment, the following information is saved to `agnosticd_us
 - `tsf_tas_namespace`: Trusted Artifact Signer namespace
 - `tsf_tpa_namespace`: Trusted Profile Analyzer namespace
 - `tsf_konflux_namespace`: Konflux namespace
+- `tsf_keycloak_admin_username`: Keycloak admin username for TSSC realm
+- `tsf_keycloak_admin_password`: Keycloak admin password for TSSC realm
 
 ### Keycloak Credentials
 
-Keycloak admin credentials are stored in the secret `keycloak-initial-admin` in the `tssc-keycloak` namespace:
+**Initial Admin (Master Realm):**
+Keycloak initial admin credentials are stored in the secret `keycloak-initial-admin` in the `tssc-keycloak` namespace:
 
 ```bash
 oc get secret keycloak-initial-admin -n tssc-keycloak -o jsonpath='{.data.username}' | base64 -d
 oc get secret keycloak-initial-admin -n tssc-keycloak -o jsonpath='{.data.password}' | base64 -d
 ```
+
+**TSSC Realm Admin:**
+The role automatically creates an admin user in the TSSC realm and configures OpenShift OAuth integration. Users can log into OpenShift using Keycloak authentication with the configured admin credentials.
 
 ## Architecture
 
@@ -158,11 +171,16 @@ This role:
    - Modifies the Konflux channel in `charts/tssc-subscriptions/values.yaml` from `stable-v0` to `stable-v0.1`
    - `tssc config --create` to create the TSF configuration
    - Updates the configuration to set cert-manager `manageSubscription: false`
-   - `tssc integration gitlab` to configure GitLab integration (if enabled)
-   - `tssc integration quay` to configure Quay integration (if enabled)
+   - `tssc integration gitlab` to configure GitLab integration
+   - `tssc integration quay` to configure Quay integration
    - `tssc deploy --values-template /tmp/installer/charts/values.yaml.tpl` to deploy TSF components using customized installer files
-4. Saves access information
-5. Cleans up the tssc-cli pod
+4. Configures Keycloak authentication:
+   - Waits for Keycloak to be ready
+   - Creates an admin user in the TSSC realm
+   - Configures OpenShift OAuth client in Keycloak
+   - Sets up OpenShift to use Keycloak for authentication
+5. Saves access information
+6. Cleans up the tssc-cli pod
 
 ## Troubleshooting
 
