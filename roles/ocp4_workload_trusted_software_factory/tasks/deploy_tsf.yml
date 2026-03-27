@@ -89,6 +89,23 @@
         template: tssc-config.yml.j2
 
 # Configure GitLab integration
+- name: Wait for GitLab initialization job to complete
+  kubernetes.core.k8s_info:
+    api_version: batch/v1
+    kind: Job
+    namespace: "{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}"
+    label_selectors:
+      - job-name=initialize-gitlab
+  register: r_gitlab_init_job
+  retries: 80
+  delay: 15
+  until:
+    - r_gitlab_init_job.resources | length > 0
+    - r_gitlab_init_job.resources[0].status is defined
+    - r_gitlab_init_job.resources[0].status.conditions is defined
+    - r_gitlab_init_job.resources[0].status.conditions | selectattr('type', 'equalto', 'Complete') | list | length > 0
+    - (r_gitlab_init_job.resources[0].status.conditions | selectattr('type', 'equalto', 'Complete') | first).status == "True"
+
 - name: Get GitLab route
   kubernetes.core.k8s_info:
     api_version: route.openshift.io/v1
