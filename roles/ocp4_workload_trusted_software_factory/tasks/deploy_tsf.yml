@@ -42,37 +42,6 @@
       sed -i '/subscriptions:/,/konflux:/{s/  konflux:/  konflux:\n    channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
       /tssc/charts/values.yaml.tpl
 
-- name: Add Konflux image-controller configuration to values template
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: >-
-      sed -i '/^konflux:/a\  imageController:\n    enabled: {{ ocp4_workload_trusted_software_factory_konflux_image_controller_enabled | lower }}'
-      /tssc/charts/values.yaml.tpl
-
-- name: Add imageController default to Konflux chart values
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: >-
-      sh -c 'cat > /tssc/charts/tssc-konflux/values.yaml <<EOF
-      ---
-      konflux:
-        namespace: konflux-ui
-        imageController:
-          enabled: {{ ocp4_workload_trusted_software_factory_konflux_image_controller_enabled | lower }}
-        tssc:
-          namespace: __OVERWRITE_ME__
-      EOF'
-
-- name: Fix hard-coded imageController in Konflux template
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: >-
-      sed -i '/imageController:/,/enabled:/ s/enabled: true/enabled: {{ .Values.konflux.imageController.enabled | default false }}/'
-      /tssc/charts/tssc-konflux/templates/konflux.yaml
-
 # Update cert-manager manageSubscription setting
 - name: Update cert-manager manageSubscription in config
   when: not ocp4_workload_trusted_software_factory_manage_cert_manager_subscription
