@@ -25,24 +25,14 @@
     - r_tssc_pod.resources[0].status.phase is defined
     - r_tssc_pod.resources[0].status.phase == "Running"
 
-# Extract installer files to customize
-- name: Prepare TSF installer
-  kubernetes.core.k8s_exec:
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-    pod: tssc-cli
-    command: "{{ item }}"
-  loop:
-    - mkdir -p /tmp/installer
-    - tssc installer --extract /tmp/installer
-  register: r_installer_extract
-
-- name: Update Konflux channel in extracted installer files
+# Update Konflux channel in embedded charts
+- name: Update Konflux channel in embedded installer charts
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
     command: >-
       sed -i '/^  konflux:/,/^  [a-z]/{/channel:/s/channel: .*/channel: {{ ocp4_workload_trusted_software_factory_konflux_channel }}/}'
-      /tmp/installer/charts/tssc-subscriptions/values.yaml
+      /tssc/charts/tssc-subscriptions/values.yaml
 
 # Create TSF configuration using tssc CLI
 - name: Create TSF configuration via CLI
@@ -162,12 +152,12 @@
       --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
       --dockerconfigjson '{"auths":{"{{ _quay_host }}":{"auth":"{{ _quay_auth }}"}}}'
 
-# Deploy TSF using custom installer files
-- name: Deploy TSF via tssc CLI with custom installer
+# Deploy TSF using embedded installer charts
+- name: Deploy TSF via tssc CLI
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: tssc deploy --debug --values-template /tmp/installer/charts/values.yaml.tpl
+    command: tssc deploy --debug
   register: r_tsf_deploy
 
 - name: Display TSF deployment output
