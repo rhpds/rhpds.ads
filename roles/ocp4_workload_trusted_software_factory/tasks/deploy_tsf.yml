@@ -33,7 +33,7 @@
     command: "{{ item }}"
   loop:
     - mkdir -p /tmp/installer
-    - tsf installer --extract /tmp/installer
+    - tssc installer --extract /tmp/installer
   register: r_installer_extract
 
 - name: Update Konflux channel in extracted installer files
@@ -49,7 +49,7 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: tsf config --create --namespace {{ ocp4_workload_trusted_software_factory_namespace }}
+    command: tssc config --create --namespace {{ ocp4_workload_trusted_software_factory_namespace }}
   register: r_tsf_config_create
 
 # Update cert-manager manageSubscription setting
@@ -68,20 +68,20 @@
       ansible.builtin.set_fact:
         _tsf_config: "{{ r_tsf_config.resources[0].data['config.yaml'] | from_yaml }}"
 
-    - name: Find Cert-Manager product index
-      ansible.builtin.set_fact:
-        _cert_manager_index: "{{ _tsf_config.tssc.products | map(attribute='name') | list | index('Cert-Manager') }}"
-
     - name: Update Cert-Manager manageSubscription
       ansible.builtin.set_fact:
         _tsf_config_updated: "{{ _tsf_config | combine({'tssc': {'products': _updated_products}}, recursive=True) }}"
       vars:
         _updated_products: >-
-          {{
-            _tsf_config.tssc.products[:_cert_manager_index | int] +
-            [_tsf_config.tssc.products[_cert_manager_index | int] | combine({'properties': {'manageSubscription': false}}, recursive=True)] +
-            _tsf_config.tssc.products[_cert_manager_index | int + 1:]
-          }}
+          {% set products = [] %}
+          {% for product in _tsf_config.tssc.products %}
+            {% if product.name == 'Cert-Manager' %}
+              {% set _ = products.append(product | combine({'properties': {'manageSubscription': false}}, recursive=True)) %}
+            {% else %}
+              {% set _ = products.append(product) %}
+            {% endif %}
+          {% endfor %}
+          {{ products }}
 
     - name: Update TSF configuration ConfigMap
       kubernetes.core.k8s:
@@ -110,7 +110,7 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
     command: >-
-      tsf integration gitlab
+      tssc integration gitlab
       --host {{ r_gitlab_route.resources[0].spec.host }}
       --port 443
       --token {{ r_gitlab_secret.resources[0].data.token | b64decode }}
@@ -144,7 +144,7 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
     command: >-
-      tsf integration quay
+      tssc integration quay
       --url https://{{ _quay_host }}
       --token {{ _quay_token }}
       --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
@@ -155,7 +155,7 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: tsf deploy --debug --values-template /tmp/installer/charts/values.yaml.tpl
+    command: tssc deploy --debug --values-template /tmp/installer/charts/values.yaml.tpl
   register: r_tsf_deploy
   async: "{{ ocp4_workload_trusted_software_factory_deploy_timeout }}"
   poll: 10
