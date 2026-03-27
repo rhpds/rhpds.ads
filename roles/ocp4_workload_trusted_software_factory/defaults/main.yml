@@ -32,7 +32,7 @@ ocp4_workload_trusted_software_factory_gitlab_group: tsf
 # Quay integration
 ocp4_workload_trusted_software_factory_quay_namespace: quay-enterprise
 ocp4_workload_trusted_software_factory_quay_admin_username: quayadmin
-ocp4_workload_trusted_software_factory_quay_organization: quayadmin
+ocp4_workload_trusted_software_factory_quay_organization: tsf
 # Note: Uses hardcoded secret name 'quay-admin-token' with field 'token' for Quay admin token
 # Note: Quay host is derived from the route
 

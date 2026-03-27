@@ -153,7 +153,7 @@
     body_format: json
     body:
       name: "{{ ocp4_workload_trusted_software_factory_quay_organization }}"
-      email: "{{ ocp4_workload_trusted_software_factory_quay_organization }}@example.com"
+      email: "{{ ocp4_workload_trusted_software_factory_quay_organization }}@demo.redhat.com"
     validate_certs: false
     status_code: [200, 201]
   register: r_quay_org_create
@@ -167,7 +167,6 @@
       --url https://{{ _quay_host }}
       --token {{ _quay_token }}
       --organization {{ ocp4_workload_trusted_software_factory_quay_organization }}
-      --dockerconfigjson '{"auths":{"{{ _quay_host }}":{"auth":"{{ _quay_auth }}"}}}'
       --force
 
 # Deploy TSF using embedded installer charts
