@@ -169,8 +169,6 @@
     pod: tssc-cli
     command: tssc deploy --debug --values-template /tmp/installer/charts/values.yaml.tpl
   register: r_tsf_deploy
-  async: "{{ ocp4_workload_trusted_software_factory_deploy_timeout }}"
-  poll: 10
 
 - name: Display TSF deployment output
   ansible.builtin.debug:

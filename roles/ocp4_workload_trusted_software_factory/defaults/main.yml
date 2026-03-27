@@ -39,9 +39,6 @@ ocp4_workload_trusted_software_factory_quay_organization: quayadmin
 # Note: Uses hardcoded secret name 'quay-admin-token' with field 'token' for Quay admin token
 # Note: Quay host is derived from the route
 
-# Deployment timeout
-ocp4_workload_trusted_software_factory_deploy_timeout: 900
-
 # Keycloak admin user configuration
 ocp4_workload_trusted_software_factory_keycloak_realm: tssc-iam
 ocp4_workload_trusted_software_factory_keycloak_admin_username: admin
