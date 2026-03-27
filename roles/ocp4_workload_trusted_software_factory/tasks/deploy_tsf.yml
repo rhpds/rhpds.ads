@@ -72,7 +72,7 @@
       ansible.builtin.set_fact:
         _tsf_config_updated: "{{ _tsf_config | combine({'tssc': {'products': _updated_products}}, recursive=True) }}"
       vars:
-        _updated_products: >-
+        _updated_products: |
           {% set products = [] %}
           {% for product in _tsf_config.tssc.products %}
             {% if product.name == 'Cert-Manager' %}
@@ -81,7 +81,7 @@
               {% set _ = products.append(product) %}
             {% endif %}
           {% endfor %}
-          {{ products }}
+          {{ products | to_json | from_json }}
 
     - name: Update TSF configuration ConfigMap
       kubernetes.core.k8s:
