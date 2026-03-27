@@ -1,6 +1,25 @@
 ---
 # Deploy Trusted Software Factory using tsf CLI
 
+# Ensure serviceAccountIssuer is set for TAS OIDC configuration
+- name: Get cluster Authentication config
+  kubernetes.core.k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Authentication
+    name: cluster
+  register: r_authentication
+
+- name: Set serviceAccountIssuer if empty
+  when: r_authentication.resources[0].spec.serviceAccountIssuer | default('') == ''
+  kubernetes.core.k8s:
+    api_version: config.openshift.io/v1
+    kind: Authentication
+    name: cluster
+    definition:
+      spec:
+        serviceAccountIssuer: "https://kubernetes.default.svc"
+    state: patched
+
 - name: Create TSF resources
   kubernetes.core.k8s:
     state: present
