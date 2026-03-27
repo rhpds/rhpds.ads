@@ -1,14 +1,6 @@
 ---
 # Remove Trusted Software Factory
 
-- name: Delete TSF deployment job
-  kubernetes.core.k8s:
-    state: absent
-    api_version: batch/v1
-    kind: Job
-    name: tsf-deploy
-    namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-
 - name: Delete TSF configuration
   kubernetes.core.k8s:
     state: absent

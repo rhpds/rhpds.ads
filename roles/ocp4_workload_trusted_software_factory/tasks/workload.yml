@@ -127,8 +127,9 @@
   kubernetes.core.k8s_info:
     api_version: route.openshift.io/v1
     kind: Route
+    name: quay-quay
     namespace: "{{ ocp4_workload_trusted_software_factory_quay_namespace }}"
-  register: r_quay_routes
+  register: r_quay_route
 
 - name: Get Quay admin token from secret
   kubernetes.core.k8s_info:
@@ -140,7 +141,7 @@
 
 - name: Set Quay variables
   ansible.builtin.set_fact:
-    _quay_host: "{{ r_quay_routes.resources[0].spec.host }}"
+    _quay_host: "{{ r_quay_route.resources[0].spec.host }}"
     _quay_token: "{{ r_quay_secret.resources[0].data.token | b64decode }}"
     _quay_auth: "{{ (ocp4_workload_trusted_software_factory_quay_admin_username + ':' + (r_quay_secret.resources[0].data.token | b64decode)) | b64encode }}"
 
