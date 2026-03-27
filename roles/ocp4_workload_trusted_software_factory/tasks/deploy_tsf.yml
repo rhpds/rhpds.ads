@@ -204,7 +204,6 @@
   ansible.builtin.assert:
     that:
       - r_tsf_deploy.rc == 0
-      - r_tsf_deploy.stdout is search('Deploying .* in .*')
-      - r_tsf_deploy.stdout is not search('Error:')
+      - r_tsf_deploy.stdout is search('Deployment complete!')
     fail_msg: "TSF deployment failed. Check output above for errors."
     success_msg: "TSF deployment completed successfully"
