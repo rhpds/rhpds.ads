@@ -83,16 +83,7 @@
     - name: Update TSF configuration ConfigMap
       kubernetes.core.k8s:
         state: present
-        definition:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: tssc-config
-            namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
-            labels:
-              tssc.redhat-appstudio.github.com/config: "true"
-          data:
-            config.yaml: "{{ _tsf_config_updated | to_nice_yaml }}"
+        template: tssc-config.yml.j2
 
 # Configure GitLab integration
 - name: Get GitLab route

@@ -161,61 +161,20 @@
         validate_certs: false
       register: r_client_secret
 
-    - name: Configure OpenShift OAuth
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: config.openshift.io/v1
-          kind: OAuth
-          metadata:
-            name: cluster
-          spec:
-            identityProviders:
-              - name: keycloak
-                mappingMethod: claim
-                type: OpenID
-                openID:
-                  issuer: "{{ _keycloak_url }}/realms/{{ ocp4_workload_trusted_software_factory_keycloak_realm }}"
-                  clientID: openshift
-                  clientSecret:
-                    name: keycloak-client-secret
-                  claims:
-                    preferredUsername:
-                      - preferred_username
-                    name:
-                      - name
-                    email:
-                      - email
-
     - name: Create client secret for OpenShift OAuth
       kubernetes.core.k8s:
         state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: keycloak-client-secret
-            namespace: openshift-config
-          type: Opaque
-          stringData:
-            clientSecret: "{{ r_client_secret.json.value }}"
+        template: keycloak-client-secret.yml.j2
+
+    - name: Configure OpenShift OAuth
+      kubernetes.core.k8s:
+        state: present
+        template: oauth.yml.j2
 
 - name: Grant cluster-admin to Keycloak admin user
   kubernetes.core.k8s:
     state: present
-    definition:
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: ClusterRoleBinding
-      metadata:
-        name: keycloak-admin-cluster-admin
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: ClusterRole
-        name: cluster-admin
-      subjects:
-        - apiGroup: rbac.authorization.k8s.io
-          kind: User
-          name: "{{ ocp4_workload_trusted_software_factory_keycloak_admin_username }}"
+    template: keycloak-admin-clusterrolebinding.yml.j2
 
 - name: Wait for OAuth pods to restart
   when: r_tsf_realm.status == 200
