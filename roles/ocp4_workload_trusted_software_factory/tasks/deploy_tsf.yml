@@ -199,3 +199,12 @@
 - name: Display TSF deployment output
   ansible.builtin.debug:
     var: r_tsf_deploy.stdout_lines
+
+- name: Check TSF deployment status
+  ansible.builtin.assert:
+    that:
+      - r_tsf_deploy.rc == 0
+      - r_tsf_deploy.stdout is search('Deploying .* in .*')
+      - r_tsf_deploy.stdout is not search('Error:')
+    fail_msg: "TSF deployment failed. Check output above for errors."
+    success_msg: "TSF deployment completed successfully"
