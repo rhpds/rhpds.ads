@@ -244,19 +244,19 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: sh -c 'tail -f /tmp/tssc-deploy.log | grep -q "Success" && exit 0'
+    command: sh -c 'while pgrep -f "tssc deploy" > /dev/null; do sleep 10; done; echo "Deploy process completed"'
   register: r_tsf_deploy
   retries: 1
   delay: 0
   failed_when: false
 
-- name: Get TSF deployment log
+- name: Display TSF deployment log
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tssc-cli
-    command: cat /tmp/tssc-deploy.log
+    command: tail -100 /tmp/tssc-deploy.log
   register: r_tsf_deploy_log
 
-- name: Display TSF deployment output
+- name: Show deployment output
   ansible.builtin.debug:
     var: r_tsf_deploy_log.stdout_lines
