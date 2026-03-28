@@ -43,31 +43,31 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
   register: r_keycloak_admin_secret
 
-- name: Build TAS routes dictionary
+- name: Build TAS routes indexed variables
   ansible.builtin.set_fact:
-    _tas_routes_dict: "{{ _tas_routes_dict | default({}) | combine({item.metadata.name: 'https://' + item.spec.host}) }}"
+    _tas_routes_data: "{{ _tas_routes_data | default({}) | combine({
+      'tas_route_' ~ loop.index ~ '_name': item.metadata.name,
+      'tas_route_' ~ loop.index ~ '_url': 'https://' + item.spec.host }) }}"
   loop: "{{ r_tas_routes.resources }}"
   when: r_tas_routes.resources | length > 0
 
-- name: Save TSF access information to user data
-  agnosticd.core.agnosticd_user_info:
-    data:
-      # Keycloak
+- name: Build base user data dictionary
+  ansible.builtin.set_fact:
+    _tsf_user_data:
       keycloak_url: "{{ 'https://' + r_keycloak_route.resources[0].spec.host if r_keycloak_route.resources | length > 0 else 'Not available' }}"
       keycloak_admin_username: "{{ r_keycloak_admin_secret.resources[0].data.username | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
       keycloak_admin_password: "{{ r_keycloak_admin_secret.resources[0].data.password | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
-
-      # Konflux UI
       konflux_ui_url: "{{ 'https://' + r_konflux_routes.resources[0].spec.host if r_konflux_routes.resources | length > 0 else 'Not available' }}"
-
-      # TAS (Trusted Artifact Signer)
-      tas_routes: "{{ _tas_routes_dict | default({}) }}"
-
-      # TPA (Trusted Profile Analyzer)
       tpa_url: "{{ 'https://' + r_tpa_routes.resources[0].spec.host if r_tpa_routes.resources | length > 0 else 'Not available' }}"
-
-      # Namespaces
       tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
       tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
       tsf_tpa_namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
       tsf_konflux_namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
+
+- name: Merge TAS routes data with base user data
+  ansible.builtin.set_fact:
+    _tsf_user_data: "{{ _tsf_user_data | combine(_tas_routes_data | default({})) }}"
+
+- name: Save TSF access information to user data
+  agnosticd.core.agnosticd_user_info:
+    data: "{{ _tsf_user_data }}"
