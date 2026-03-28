@@ -46,9 +46,11 @@
 - name: Build TAS routes indexed variables
   ansible.builtin.set_fact:
     _tas_routes_data: "{{ _tas_routes_data | default({}) | combine({
-      'tas_route_' ~ loop.index ~ '_name': item.metadata.name,
-      'tas_route_' ~ loop.index ~ '_url': 'https://' + item.spec.host }) }}"
+      'tas_route_' ~ ansible_loop.index ~ '_name': item.metadata.name,
+      'tas_route_' ~ ansible_loop.index ~ '_url': 'https://' + item.spec.host }) }}"
   loop: "{{ r_tas_routes.resources }}"
+  loop_control:
+    extended: true
   when: r_tas_routes.resources | length > 0
 
 - name: Build base user data dictionary
