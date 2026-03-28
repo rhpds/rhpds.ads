@@ -43,24 +43,6 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
   register: r_keycloak_admin_secret
 
-- name: Get TSF realm admin user from realm import secret
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    name: keycloak-tsf-iam-realm
-    namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
-  register: r_tsf_realm_secret
-
-- name: Extract admin user credentials from realm
-  when: r_tsf_realm_secret.resources | length > 0
-  ansible.builtin.set_fact:
-    _tsf_realm_json: "{{ r_tsf_realm_secret.resources[0].data['tsf-iam-realm.json'] | b64decode | from_json }}"
-
-- name: Get admin user from realm
-  when: r_tsf_realm_secret.resources | length > 0
-  ansible.builtin.set_fact:
-    _tsf_admin_user: "{{ _tsf_realm_json.users | selectattr('username', 'equalto', 'admin') | first }}"
-
 - name: Build TAS routes dictionary
   ansible.builtin.set_fact:
     _tas_routes_dict: "{{ _tas_routes_dict | default({}) | combine({item.metadata.name: 'https://' + item.spec.host}) }}"
@@ -74,8 +56,6 @@
       keycloak_url: "{{ 'https://' + r_keycloak_route.resources[0].spec.host if r_keycloak_route.resources | length > 0 else 'Not available' }}"
       keycloak_admin_username: "{{ r_keycloak_admin_secret.resources[0].data.username | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
       keycloak_admin_password: "{{ r_keycloak_admin_secret.resources[0].data.password | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
-      tsf_realm_admin_username: "{{ _tsf_admin_user.username | default('Not available') }}"
-      tsf_realm_admin_password: "{{ _tsf_admin_user.credentials[0].value | default('Not available') }}"
 
       # Konflux UI
       konflux_ui_url: "{{ 'https://' + r_konflux_routes.resources[0].spec.host if r_konflux_routes.resources | length > 0 else 'Not available' }}"
@@ -85,8 +65,6 @@
 
       # TPA (Trusted Profile Analyzer)
       tpa_url: "{{ 'https://' + r_tpa_routes.resources[0].spec.host if r_tpa_routes.resources | length > 0 else 'Not available' }}"
-      tpa_username: "{{ _tsf_admin_user.username | default('Not available') }}"
-      tpa_password: "{{ _tsf_admin_user.credentials[0].value | default('Not available') }}"
 
       # Namespaces
       tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
