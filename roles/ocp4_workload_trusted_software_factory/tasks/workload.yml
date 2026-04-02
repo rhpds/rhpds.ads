@@ -43,6 +43,14 @@
     namespace: "{{ ocp4_workload_trusted_software_factory_keycloak_namespace }}"
   register: r_keycloak_admin_secret
 
+- name: Get Pipeline-as-Code Controller route
+  kubernetes.core.k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: pipelines-as-code-controller
+    namespace: "{{ ocp4_workload_trusted_software_factory_pipelines_namespace }}"
+  register: r_pac_controller_route
+
 - name: Build TAS routes indexed variables
   ansible.builtin.set_fact:
     _tas_routes_data: "{{ _tas_routes_data | default({}) | combine({
@@ -60,6 +68,7 @@
       keycloak_admin_username: "{{ r_keycloak_admin_secret.resources[0].data.username | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
       keycloak_admin_password: "{{ r_keycloak_admin_secret.resources[0].data.password | b64decode if r_keycloak_admin_secret.resources | length > 0 else 'Not available' }}"
       konflux_ui_url: "{{ 'https://' + r_konflux_routes.resources[0].spec.host if r_konflux_routes.resources | length > 0 else 'Not available' }}"
+      pipeline_as_code_controller_url: "{{ 'https://' + r_pac_controller_route.resources[0].spec.host if r_pac_controller_route.resources | length > 0 else 'Not available' }}"
       tpa_url: "{{ 'https://' + r_tpa_routes.resources[0].spec.host if r_tpa_routes.resources | length > 0 else 'Not available' }}"
       tsf_namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
       tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"

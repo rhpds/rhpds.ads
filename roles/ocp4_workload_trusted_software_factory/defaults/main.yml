@@ -23,6 +23,9 @@ ocp4_workload_trusted_software_factory_tpa_namespace: tsf-tpa
 # Keycloak namespace
 ocp4_workload_trusted_software_factory_keycloak_namespace: tsf-keycloak
 
+# OpenShift Pipelines namespace
+ocp4_workload_trusted_software_factory_pipelines_namespace: openshift-pipelines
+
 # GitLab integration
 ocp4_workload_trusted_software_factory_gitlab_namespace: gitlab
 ocp4_workload_trusted_software_factory_gitlab_group: tsf
