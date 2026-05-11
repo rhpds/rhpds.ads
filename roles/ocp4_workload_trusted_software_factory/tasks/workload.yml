@@ -74,7 +74,6 @@
       tsf_tas_namespace: "{{ ocp4_workload_trusted_software_factory_tas_namespace }}"
       tsf_tpa_namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
       tsf_konflux_namespace: "{{ ocp4_workload_trusted_software_factory_konflux_namespace }}"
-      gitlab_url: "https://gitlab-{{ ocp4_workload_trusted_software_factory_gitlab_namespace }}.{{ openshift_cluster_ingress_domain }}"
 
 - name: Merge TAS routes data with base user data
   ansible.builtin.set_fact:
