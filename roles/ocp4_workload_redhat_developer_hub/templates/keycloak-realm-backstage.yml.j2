@@ -19,7 +19,7 @@ spec:
         trustEmail: true
         firstBrokerLoginFlowAlias: first broker login
         config:
-          clientId: {{ ocp4_workload_redhat_developer_hub_keycloak_client_id }}          
+          clientId: {{ ocp4_workload_redhat_developer_hub_keycloak_client_id }}
           tokenUrl: http://gitlab.{{ ocp4_workload_redhat_developer_hub_gitlab_namespace }}.svc/oauth/token
           authorizationUrl: https://{{ ocp4_workload_redhat_developer_hub_gitlab_host }}/oauth/authorize
           clientAuthMethod: client_secret_basic
