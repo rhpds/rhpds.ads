@@ -22,9 +22,23 @@ spec:
           clientId: {{ ocp4_workload_redhat_developer_hub_keycloak_client_id }}
           tokenUrl: https://{{ ocp4_workload_redhat_developer_hub_gitlab_host }}/oauth/token
           authorizationUrl: https://{{ ocp4_workload_redhat_developer_hub_gitlab_host }}/oauth/authorize
+          userInfoUrl: https://{{ ocp4_workload_redhat_developer_hub_gitlab_host }}/oauth/userinfo
           clientAuthMethod: client_secret_basic
           syncMode: IMPORT
           clientSecret: {{ ocp4_workload_redhat_developer_hub_keycloak_client_secret }}
           useJwksUrl: 'true'
           disableTrustManager: 'true'
+          defaultScope: "openid email profile read_user"
+    identityProviderMappers:
+      - name: email
+        identityProviderAlias: GitLab
+        identityProviderMapper: oidc-user-attribute-idp-mapper
+        config:
+          syncMode: FORCE
+          claim: email
+          user.attribute: email
+    authenticatorConfig:
+      - alias: review profile config
+        config:
+          update.profile.on.first.login: "off"
     realm: backstage

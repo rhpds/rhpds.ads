@@ -15,6 +15,29 @@ spec:
     directAccessGrantsEnabled: true
     implicitFlowEnabled: false
     publicClient: false
+    protocolMappers:
+    - name: email
+      protocol: openid-connect
+      protocolMapper: oidc-usermodel-property-mapper
+      consentRequired: false
+      config:
+        userinfo.token.claim: "true"
+        user.attribute: email
+        id.token.claim: "true"
+        access.token.claim: "true"
+        claim.name: email
+        jsonType.label: String
+    - name: email verified
+      protocol: openid-connect
+      protocolMapper: oidc-usermodel-property-mapper
+      consentRequired: false
+      config:
+        userinfo.token.claim: "true"
+        user.attribute: emailVerified
+        id.token.claim: "true"
+        access.token.claim: "true"
+        claim.name: email_verified
+        jsonType.label: boolean
     redirectUris:
     - https://{{ ocp4_workload_redhat_developer_hub_backstage_host }}/oauth2/callback
     serviceAccountsEnabled: true
