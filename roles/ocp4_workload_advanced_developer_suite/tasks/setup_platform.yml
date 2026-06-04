@@ -81,6 +81,7 @@
     ./bin/tssc config --create
     ./bin/tssc config --get > config.yaml && ./bin/tssc config --delete
     sed -i 's/^\(\s*authProvider:\s*\)github/\1oidc/' config.yaml
+    sed -i '/- name: OpenShift GitOps/,/- name:/{s/manageSubscription: true/manageSubscription: false/}' config.yaml
     ./bin/tssc config --create config.yaml
   args:
     chdir: /tmp/tssc_cli
