@@ -31,7 +31,6 @@
     src: /tmp/component-rhpds.yaml
     dest: /tmp/{{ ocp4_workload_advanced_developer_suite_dh_catalog_locations.repository }}/component-rhpds.yaml
     mode: "0660"
-    owner: "{{ ansible_user }}"
   vars:
     ocp_apps_domain: "{{ _ocp_apps_domain }}"
     guid: "{{ guid }}"
