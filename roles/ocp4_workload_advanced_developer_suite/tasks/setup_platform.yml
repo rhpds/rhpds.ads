@@ -7,6 +7,7 @@
 - name: Install helm if not present
   when: git_helm.rc != 0
   become: true
+  become_method: su
   ansible.builtin.shell: |
     curl -LO https://get.helm.sh/helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
     tar -zxvf helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
@@ -16,6 +17,7 @@
 
 - name: Install and configure prerequisites for building tssc cli
   become: true
+  become_method: su
   ansible.builtin.shell: |
     dnf install make -y
     VERSION={{ ocp4_workload_advanced_developer_suite_go_version }}
