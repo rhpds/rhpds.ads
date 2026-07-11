@@ -23,6 +23,7 @@
 
 - name: Integrate gitlab
   ansible.builtin.shell: |
+    export KUBECONFIG=$HOME/.kube/config
     ./bin/tssc integration gitlab \
     --token="{{ _gitlab_root_token }}" \
     --host="{{ _gitlab_host }}" \
@@ -70,6 +71,7 @@
 
 - name: Integrate jenkins
   ansible.builtin.shell: |
+    export KUBECONFIG=$HOME/.kube/config
     ./bin/tssc integration jenkins \
     --token="{{ _jenkins_token }}" \
     --url="{{ _jenkins_url }}" \
@@ -215,6 +217,7 @@
 
 - name: Integrate quay
   ansible.builtin.shell: |
+    export KUBECONFIG=$HOME/.kube/config
     ./bin/tssc integration quay \
     --dockerconfigjson='{{ _dockerconfigjson_write }}' \
     --dockerconfigjsonreadonly='{{ _dockerconfigjson_readonly }}' \
