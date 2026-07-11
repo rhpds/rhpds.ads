@@ -78,6 +78,7 @@
   ansible.builtin.shell: |
     export PATH=$HOME/.local/bin:/tmp/go/bin:$PATH
     export GOROOT=/tmp/go
+    export KUBECONFIG=$HOME/.kube/config
     make build
     ./bin/tssc config --create
     ./bin/tssc config --get > config.yaml && ./bin/tssc config --delete
@@ -94,6 +95,7 @@
 - name: Deploy platform
   ansible.builtin.shell: |
     export PATH=$HOME/.local/bin:/tmp/go/bin:$PATH
+    export KUBECONFIG=$HOME/.kube/config
     cat /tmp/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
     ./bin/tssc deploy
   args:
