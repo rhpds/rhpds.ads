@@ -6,29 +6,24 @@
 
 - name: Install helm if not present
   when: git_helm.rc != 0
-  become: true
-  become_method: su
   ansible.builtin.shell: |
+    mkdir -p $HOME/.local/bin
     curl -LO https://get.helm.sh/helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
     tar -zxvf helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
-    mv linux-amd64/helm /usr/local/bin/helm
+    mv linux-amd64/helm $HOME/.local/bin/helm
+    rm -rf linux-amd64 helm-{{ ocp4_workload_advanced_developer_suite_helm_cli_version }}-linux-amd64.tar.gz
   args:
     chdir: /tmp
 
 - name: Install and configure prerequisites for building tssc cli
-  become: true
-  become_method: su
   ansible.builtin.shell: |
-    dnf install make -y
+    mkdir -p $HOME/.local/bin
     VERSION={{ ocp4_workload_advanced_developer_suite_go_version }}
-    wget https://go.dev/dl/${VERSION}.linux-amd64.tar.gz
-    rm -rf /usr/local/go /usr/bin/go
-    tar -C /usr/local -xzf ${VERSION}.linux-amd64.tar.gz
-    ln -sf /usr/local/go/bin/go /usr/bin/go
+    wget -q https://go.dev/dl/${VERSION}.linux-amd64.tar.gz
+    tar -C /tmp -xzf ${VERSION}.linux-amd64.tar.gz
+    ln -sf /tmp/go/bin/go $HOME/.local/bin/go
     rm -rf ${VERSION}.linux-amd64.tar.gz
     oc login --token={{ openshift_cluster_admin_token }} {{ openshift_api_url }} --insecure-skip-tls-verify
-    mkdir -p /root/.kube
-    cp /home/runner/.kube/config /root/.kube/config
 
 - name: Clone tssc repository
   ansible.builtin.git:
@@ -81,6 +76,8 @@
 
 - name: Build tssc cli and create config
   ansible.builtin.shell: |
+    export PATH=$HOME/.local/bin:/tmp/go/bin:$PATH
+    export GOROOT=/tmp/go
     make build
     ./bin/tssc config --create
     ./bin/tssc config --get > config.yaml && ./bin/tssc config --delete
@@ -96,6 +93,7 @@
 
 - name: Deploy platform
   ansible.builtin.shell: |
+    export PATH=$HOME/.local/bin:/tmp/go/bin:$PATH
     cat /tmp/tssc_cli/installer/charts/tssc-subscriptions/values.yaml
     ./bin/tssc deploy
   args:
