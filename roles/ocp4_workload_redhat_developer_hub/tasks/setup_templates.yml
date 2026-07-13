@@ -9,7 +9,7 @@
 
 - name: Remove older repo folders
   ansible.builtin.file:
-    path: "~{{ ansible_user }}/{{ location.project }}"
+    path: "/tmp/{{ location.project }}"
     state: absent
 
 - name: Clone {{ location.project }}
@@ -17,7 +17,7 @@
     accept_hostkey: true
     force: true
     repo: "{{ ocp4_workload_redhat_developer_hub_template_repo_url }}"
-    dest: "~{{ ansible_user }}/{{ location.project }}"
+    dest: "/tmp/{{ location.project }}"
     version: "{{ location.branch }}"
   environment:
     GIT_SSL_NO_VERIFY: "true"
@@ -29,7 +29,7 @@
   loop_control:
     loop_var: template_file
   vars:
-    folder: "~{{ ansible_user }}/{{ location.project }}"
+    folder: "/tmp/{{ location.project }}"
     gitlab_host: "{{ ocp4_workload_redhat_developer_hub_gitlab_host }}"
     gitlab_group: "{{ location.group }}"
     gitlab_user_count: "{{ ocp4_workload_redhat_developer_hub_users_count }}"
@@ -40,7 +40,7 @@
   loop_control:
     loop_var: template_file
   vars:
-    folder: "~{{ ansible_user }}/{{ location.project }}"
+    folder: "/tmp/{{ location.project }}"
     gitlab_host: "{{ ocp4_workload_redhat_developer_hub_gitlab_host }}"
     gitlab_destination_group: development
     cluster_subdomain: ".{{ ocp4_workload_redhat_developer_hub_apps_domain }}"
@@ -49,14 +49,14 @@
 - name: Add new files to the repository
   ansible.builtin.command:
     chdir: >-
-      ~{{ ansible_user }}/{{ location.project }}
+      /tmp/{{ location.project }}
     cmd: "git add ."
   ignore_errors: true
 
 - name: Commit changes to the repository
   ansible.builtin.command:
     chdir: >-
-      ~{{ ansible_user}}/{{ location.project }}
+      /tmp/{{ location.project }}
     cmd: >-
       git commit -a -m 'Updates for starting scenario.'
   ignore_errors: true
@@ -64,6 +64,6 @@
 - name: Push all changes back to the project repository
   ansible.builtin.command:
     chdir: >-
-      ~{{ ansible_user}}/{{ location.project }}
+      /tmp/{{ location.project }}
     cmd: >-
       git push {{ ocp4_workload_redhat_developer_hub_template_repo_url }}

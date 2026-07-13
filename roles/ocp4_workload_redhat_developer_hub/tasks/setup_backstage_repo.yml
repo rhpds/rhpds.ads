@@ -8,7 +8,7 @@
 
 - name: Remove older repo folders
   ansible.builtin.file:
-    path: "~{{ ansible_user }}/janus-idp-gitops"
+    path: "/tmp/janus-idp-gitops"
     state: absent
 
 - name: Clone janus-idp-gitops
@@ -16,7 +16,7 @@
     accept_hostkey: true
     force: true
     repo: "{{ ocp4_workload_redhat_developer_hub_backstage_helm_repo }}"
-    dest: "~{{ ansible_user }}/janus-idp-gitops"
+    dest: "/tmp/janus-idp-gitops"
     version: "main"
   environment:
     GIT_SSL_NO_VERIFY: "true"
@@ -24,20 +24,20 @@
 - name: Apply template values to location template
   ansible.builtin.include_tasks: fetch_and_apply_template.yml
   vars:
-    folder: ~{{ ansible_user }}/janus-idp-gitops/charts/backstage
+    folder: /tmp/janus-idp-gitops/charts/backstage
     template_file: backstage-values.yaml
 
 - name: Add new files to the repository
   ansible.builtin.command:
     chdir: >-
-      ~{{ ansible_user }}/janus-idp-gitops
+      /tmp/janus-idp-gitops
     cmd: "git add ."
   ignore_errors: true
 
 - name: Commit changes to the repository
   ansible.builtin.command:
     chdir: >-
-      ~{{ ansible_user }}/janus-idp-gitops
+      /tmp/janus-idp-gitops
     cmd: >-
       git commit -a -m 'Updates for starting scenario.'
   ignore_errors: true
@@ -45,6 +45,6 @@
 - name: Push all changes back to the project repository
   ansible.builtin.command:
     chdir: >-
-      ~{{ ansible_user }}/janus-idp-gitops
+      /tmp/janus-idp-gitops
     cmd: >-
       git push {{ ocp4_workload_redhat_developer_hub_backstage_helm_repo }}
