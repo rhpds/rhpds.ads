@@ -33,6 +33,7 @@
           spec:
             securityContext:
               runAsUser: 10001
+              fsGroup: 10001
   register: deployment_patch
   until: deployment_patch is succeeded
   retries: 30
@@ -51,6 +52,7 @@
           spec:
             securityContext:
               runAsUser: 10001
+              fsGroup: 10001
   register: daemonset_patch
   until: daemonset_patch is succeeded
   retries: 30
