@@ -20,28 +20,6 @@
     namespace: "{{ ocp4_workload_kubernetes_image_puller_instance_namespace }}"
     definition: "{{ lookup('template', 'kubernetes_image_puller_instance.yml.j2') | from_yaml }}"
 
-- name: Wait for kubernetes-image-puller deployment to exist
-  kubernetes.core.k8s_info:
-    api_version: apps/v1
-    kind: Deployment
-    name: kubernetes-image-puller
-    namespace: "{{ ocp4_workload_kubernetes_image_puller_instance_namespace }}"
-  register: deployment_check
-  until: deployment_check.resources | length > 0
-  retries: 30
-  delay: 10
-
-- name: Wait for k8s-image-puller daemonset to exist
-  kubernetes.core.k8s_info:
-    api_version: apps/v1
-    kind: DaemonSet
-    name: k8s-image-puller
-    namespace: "{{ ocp4_workload_kubernetes_image_puller_instance_namespace }}"
-  register: daemonset_check
-  until: daemonset_check.resources | length > 0
-  retries: 30
-  delay: 10
-
 - name: Set security context runAsUser on kubernetes-image-puller deployment
   kubernetes.core.k8s:
     state: patched
@@ -55,6 +33,10 @@
           spec:
             securityContext:
               runAsUser: 10001
+  register: deployment_patch
+  until: deployment_patch is succeeded
+  retries: 30
+  delay: 10
 
 - name: Set security context runAsUser on k8s-image-puller daemonset
   kubernetes.core.k8s:
@@ -69,6 +51,10 @@
           spec:
             securityContext:
               runAsUser: 10001
+  register: daemonset_patch
+  until: daemonset_patch is succeeded
+  retries: 30
+  delay: 10
 
 # Leave this as the last task in the playbook.
 # --------------------------------------------
