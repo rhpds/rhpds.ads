@@ -176,17 +176,54 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ ocp4_workload_trusted_software_factory_namespace }}"
     pod: tsf-cli
-    command: sh -c 'tsf deploy 2>&1 | tee /tmp/tsf-deploy.log'
+    # Keep the CLI status: a pipeline would return tee's status instead.
+    command: >-
+      sh -c 'tsf deploy > /tmp/tsf-deploy.log 2>&1;
+      deploy_rc=$?; cat /tmp/tsf-deploy.log; exit "$deploy_rc"'
   register: r_tsf_deploy
+  # Collect bounded diagnostics before the final assertion fails the role.
+  failed_when: false
+  no_log: true
 
-- name: Display TSF deployment output
+- name: Get failed TPA test pod status
+  when: >-
+    r_tsf_deploy.rc | default(-1) != 0 or
+    'Deployment complete!' not in (r_tsf_deploy.stdout | default(''))
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    name: test-tsf-tpa
+    namespace: "{{ ocp4_workload_trusted_software_factory_tpa_namespace }}"
+  register: r_tsf_tpa_test
+  failed_when: false
+  no_log: true
+
+- name: Display TSF deployment status
   ansible.builtin.debug:
-    var: r_tsf_deploy.stdout_lines
+    msg:
+      cli_exit_code: "{{ r_tsf_deploy.rc | default('unavailable') }}"
+      completion_marker_found: "{{ 'Deployment complete!' in (r_tsf_deploy.stdout | default('')) }}"
+      tpa_test_status_available: "{{ r_tsf_tpa_test.resources | default([]) | length > 0 }}"
+      tpa_test_phase: "{{ r_tsf_tpa_test.resources[0].status.phase | default('unavailable') }}"
+      tpa_test_exit_codes: >-
+        {{ r_tsf_tpa_test.resources[0].status.containerStatuses | default([])
+           | map(attribute='state.terminated.exitCode') | select('defined') | list }}
+      tpa_test_termination_reasons: >-
+        {{ r_tsf_tpa_test.resources[0].status.containerStatuses | default([])
+           | map(attribute='state.terminated.reason') | select('defined') | list }}
+      tpa_test_waiting_reasons: >-
+        {{ r_tsf_tpa_test.resources[0].status.containerStatuses | default([])
+           | map(attribute='state.waiting.reason') | select('defined') | list }}
 
 - name: Check TSF deployment status
   ansible.builtin.assert:
     that:
-      - r_tsf_deploy.rc == 0
-      - r_tsf_deploy.stdout is search('Deployment complete!')
-    fail_msg: "TSF deployment failed. Check output above for errors."
+      - r_tsf_deploy.rc | default(-1) == 0
+      - r_tsf_deploy.stdout | default('') is search('Deployment complete!')
+    fail_msg: >-
+      TSF deployment failed (CLI exit code {{ r_tsf_deploy.rc | default('unavailable') }}).
+      Inspect /tmp/tsf-deploy.log in the tsf-cli pod in namespace
+      {{ ocp4_workload_trusted_software_factory_namespace }} and Helm test pod logs,
+      including test-tsf-tpa in {{ ocp4_workload_trusted_software_factory_tpa_namespace }},
+      before removing the cluster. Logs may contain credentials; do not publish them unredacted.
     success_msg: "TSF deployment completed successfully"
