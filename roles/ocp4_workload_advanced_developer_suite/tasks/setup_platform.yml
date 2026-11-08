@@ -67,6 +67,15 @@
       \1        value: '30000000'
       \1\2
 
+# Pin ose-cli used by tssc-pipelines post-install Job (RHDPOPS-24387).
+# Floating :latest can fail to pull/resolve; Helm then times out on the hook.
+- name: Pin ose-cli image tag for tssc-pipelines TektonConfig patch Job
+  ansible.builtin.replace:
+    path: /tmp/tssc_cli/installer/charts/tssc-pipelines/templates/tektonconfig/patch_tekton_config.yaml
+    regexp: 'registry\.redhat\.io/openshift4/ose-cli:latest'
+    replace: >-
+      registry.redhat.io/openshift4/ose-cli:{{ ocp4_workload_advanced_developer_suite_ose_cli_image_tag }}
+
 - name: Check operator channels
   ansible.builtin.include_tasks:
     file: ./check_subscriptions.yml

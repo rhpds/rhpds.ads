@@ -5,6 +5,8 @@ ocp4_workload_advanced_developer_suite_rhtas_cli_server_image: registry.redhat.i
 
 ocp4_workload_advanced_developer_suite_tssc_cli_repo: https://github.com/redhat-appstudio/rhtap-cli
 ocp4_workload_advanced_developer_suite_tssc_cli_revision: release-1.6
+# Matches ose-tools-rhel9 pin used elsewhere in tssc-cli charts (RHDPOPS-24387)
+ocp4_workload_advanced_developer_suite_ose_cli_image_tag: v4.19
 
 ocp4_workload_advanced_developer_suite_keycloak_namespace: tssc-keycloak
 ocp4_workload_advanced_developer_suite_dh_namespace: tssc-dh
